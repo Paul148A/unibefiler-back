@@ -1,12 +1,12 @@
-/* eslint-disable prettier/prettier */
-
 import {
   Column,
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { UserEntity } from './user.entity';
 
 @Entity('status', { schema: 'core' })
 export class StatusEntity {

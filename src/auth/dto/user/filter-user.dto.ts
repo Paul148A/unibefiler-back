@@ -1,24 +1,32 @@
-import { IsDate, IsOptional, IsString } from 'class-validator';
-import { PaginationDto } from '@core/dto';
+import { IsString } from 'class-validator';
+import { Expose, Type } from 'class-transformer';
+import { RoleDto } from '../role/role.dto';
+import { StatusDto } from '../status/status.dto';
 
-export class FilterUserDto extends PaginationDto {
-  @IsOptional()
-  @IsDate()
-  readonly birthdate: Date;
+export class FilterUserDto {
+  @Expose()
+  readonly id: string;
 
-  @IsOptional()
-  @IsString()
+  @Expose()
   readonly email: string;
 
-  @IsOptional()
+  @Expose()
   @IsString()
-  readonly lastname: string;
+  readonly last_names: string;
 
-  @IsOptional()
+  @Expose()
   @IsString()
-  readonly name: string;
+  readonly names: string;
 
-  @IsOptional()
+  @Expose()
   @IsString()
-  readonly username: string;
+  readonly identification: string;
+
+  @Expose()
+  @Type(() => RoleDto)
+  readonly role: RoleDto;
+
+  @Expose()
+  @Type(() => StatusDto)
+  readonly status: StatusDto;
 }

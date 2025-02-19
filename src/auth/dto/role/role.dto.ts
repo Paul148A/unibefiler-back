@@ -1,6 +1,6 @@
 import { Expose } from "class-transformer";
 
-export class StatusDto {
+export class RoleDto {
     @Expose()
     readonly id: string;
 

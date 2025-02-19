@@ -1,7 +1,8 @@
-import {PickType} from '@nestjs/swagger';
-import {UserDto} from '@auth/dto';
+import { PickType } from "@nestjs/swagger";
+import { UserDto } from "./user.dto";
+
 
 export class CreateUserDto extends PickType(UserDto, [
-    'email', 'identificationType','identification', 'lastname', 'name', 'password', 'passwordChanged', 'roles', 'username'
+    'last_names', 'names','email','identification', 'password', 'password_verification','role', 'status'
 ]) {
 }

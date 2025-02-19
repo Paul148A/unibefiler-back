@@ -1,10 +1,10 @@
-import { RoleEntity } from 'src/auth/entities';
-import { StatusEntity } from 'src/auth/entities/status.entity';
+import { RoleDto } from '../role/role.dto';
+import { StatusDto } from '../status/status.dto';
 
 export class UserDto {
-  readonly roles: RoleEntity[];
+  readonly role: RoleDto;
 
-  readonly status: StatusEntity[];
+  readonly status: StatusDto;
 
   readonly names: string;
 
@@ -15,4 +15,6 @@ export class UserDto {
   readonly email: string;
 
   readonly password: string;
+
+  readonly password_verification: string;
 }

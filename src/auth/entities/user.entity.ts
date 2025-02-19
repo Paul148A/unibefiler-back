@@ -1,5 +1,3 @@
-/* eslint-disable prettier/prettier */
-
 import {
   Column,
   Entity,
@@ -56,8 +54,15 @@ export class UserEntity {
   @Column({
     type: 'varchar',
     name: 'password',
-    comment: 'Descripcion del rol',
+    comment: 'Contraseña del usuario',
   })
   password: string;
+
+  @Column({
+    type: 'varchar',
+    name: 'password_verification',
+    comment: 'Verificar contraseña del usuario',
+  })
+  password_verification: string;
   
 }

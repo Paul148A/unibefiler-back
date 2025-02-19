@@ -2,6 +2,12 @@ import {Inject, Injectable, NotFoundException} from '@nestjs/common';
 import {FindOptionsWhere, ILike, LessThan, Repository} from 'typeorm';
 import { AuthRepositoryEnum } from '../enums/repository.enum';
 import { UserEntity } from '../entities';
+import { CreateUserDto } from '../dto/user/create-user.dto';
+import { FilterUserDto } from '../dto/user/filter-user.dto';
+import { ReadUserDto } from '../dto/user/read-user.dto';
+import { UpdateUserDto } from '../dto/user/update-user.dto';
+import { ServiceResponseHttpModel } from '../models/service-response-http.model';
+import { plainToInstance } from 'class-transformer';
 
 
 @Injectable()
@@ -13,12 +19,14 @@ export class UsersService {
     }
 
     async create(payload: CreateUserDto): Promise<UserEntity> {
+        // console.log("RECIBIDO DE PAYLOAD",payload)
         const newUser = this.repository.create(payload);
+        // console.log("RECIBIDO DE USER",newUser)
         return await this.repository.save(newUser);
     }
 
     async findAll(params?: FilterUserDto): Promise<ServiceResponseHttpModel> {
-        const relations = {roles: true, careers: true};
+        const relations = {role: true, status: true};
 
         //All
         const response = await this.repository.findAndCount({
@@ -27,38 +35,45 @@ export class UsersService {
 
         return {
             data: response[0],
-            pagination: {totalItems: response[1], limit: 10},
         };
     }
 
-    async findOne(id: string): Promise<UserEntity> {
+    async findOne(id: string): Promise<FilterUserDto> {
         const user = await this.repository.findOne({
             where: {id},
-            relations: {roles: true},
+            relations: {role: true, status: true},
             select: {password: false},
         });
 
         if (!user) {
-            throw new NotFoundException('Usuario no encontrado (find one)');
+            throw new NotFoundException('El usuario con el id: ' + id + ' no existe');
         }
 
-        return user;
+        const userDto = plainToInstance(FilterUserDto, user, {
+            excludeExtraneousValues: true
+        });
+        
+        return userDto;
     }
 
-    async findByUsername(username: string): Promise<UserEntity> {
+    async findByIdentification(identification: string): Promise<FilterUserDto> {
         const user = await this.repository.findOne({
-            where: {username},
+            where: {identification},
             select: {password: false},
         });
 
         if (!user) {
-            throw new NotFoundException('Nombre de usuario no existe');
+            throw new NotFoundException('No existe un usuario con la identificación: ' + identification);
         }
 
-        return user;
+        const userDto = plainToInstance(FilterUserDto, user, {
+            excludeExtraneousValues: true
+        });
+        
+        return userDto;
     }
 
-    async update(id: string, payload: UpdateUserDto): Promise<UserEntity> {
+    async update(id: string, payload: any): Promise<UserEntity> {
         const user = await this.repository.preload({id, ...payload});
 
         if (!user) {
@@ -68,21 +83,6 @@ export class UsersService {
         this.repository.merge(user, payload);
 
         return await this.repository.save(user);
-    }
-
-    async reactivate(id: string): Promise<ReadUserDto> {
-        const user = await this.findOne(id);
-
-        if (!user) {
-            throw new NotFoundException('Usuario no encontrado para reactivar');
-        }
-
-        user.suspendedAt = null;
-        user.maxAttempts = MAX_ATTEMPTS;
-
-        const userUpdated = await this.repository.save(user);
-
-        return plainToInstance(ReadUserDto, userUpdated);
     }
 
     async remove(id: string): Promise<ReadUserDto> {

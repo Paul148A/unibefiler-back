@@ -1,5 +1,7 @@
+import { StatusEntity } from "src/auth/entities/status.entity";
+import { UserDto } from "./user.dto";
 import { Exclude, Expose } from 'class-transformer';
-import { UserDto } from '@auth/dto';
+import { RoleEntity } from "src/auth/entities";
 
 @Exclude()
 export class ReadUserDto extends UserDto {
@@ -8,6 +10,9 @@ export class ReadUserDto extends UserDto {
   
   @Expose()
   readonly names;
+
+  @Expose()
+  readonly identification;
   
   @Expose()
   readonly lastnames;
@@ -16,6 +21,15 @@ export class ReadUserDto extends UserDto {
   readonly email;
 
   @Expose()
-  readonly roles;
+  readonly password;
+
+  @Expose()
+  readonly password_verification;
+
+  @Expose()
+  readonly status: StatusEntity;
+
+  @Expose()
+  readonly roles: RoleEntity;
 
 }
