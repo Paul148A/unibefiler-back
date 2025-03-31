@@ -3,10 +3,12 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { RoleEntity } from './rol.entity';
 import { StatusEntity } from './status.entity';
+import { Record } from 'src/upload_files/entities/record.entity';
 
 @Entity('users', { schema: 'auth' })
 export class UserEntity {
@@ -21,6 +23,10 @@ export class UserEntity {
   @ManyToOne(() => StatusEntity, (status) => status.users)
   @JoinColumn({ name: 'status_id' })
   status: StatusEntity;
+
+  @OneToOne(() => Record, (record) => record.user)
+  @JoinColumn({ name: 'record_id' })
+  record: Record;
   
   /** Columns **/
   @Column({
@@ -64,5 +70,8 @@ export class UserEntity {
     comment: 'Verificar contraseña del usuario',
   })
   password_verification: string;
+
+  @Column({ name: 'record_id', nullable: true })
+  record_id: string;
   
 }
