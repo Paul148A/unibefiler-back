@@ -9,11 +9,7 @@ export class RecordController {
 
   @Post()
   async create(@Body() payload: CreateRecordDto) {
-    return this.recordService.createRecord(
-      payload.personalDocumentsId,
-      payload.inscriptionFormId,
-      payload.degreeId,
-    );
+    return this.recordService.createRecord();
   }
 
   @Get(':id')
@@ -28,10 +24,7 @@ export class RecordController {
   @Put(':id')
   async update(@Param('id') id: string, @Body() payload: UpdateRecordDto) {
     const record = await this.recordService.updateRecord(
-      id,
-      payload.personalDocumentsId,
-      payload.inscriptionFormId,
-      payload.degreeId,
+      id
     );
     if (!record) {
       throw new NotFoundException(`Record con ID ${id} no encontrado`);

@@ -1,13 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { InscriptionForm } from '../entities/inscription-form.entity';
+import { InscriptionDocumentsEntity } from '../entities/inscription-documents.entity';
 
 @Injectable()
 export class InscriptionFormService {
   constructor(
-    @InjectRepository(InscriptionForm)
-    private readonly inscriptionFormRepository: Repository<InscriptionForm>,
+    @InjectRepository(InscriptionDocumentsEntity)
+    private readonly inscriptionFormRepository: Repository<InscriptionDocumentsEntity>,
   ) {}
 
   async saveInscriptionForm(
@@ -17,14 +17,14 @@ export class InscriptionFormService {
     englishCertificateDoc: string,
     enrollmentCertificateDoc: string,
     approvalDoc: string,
-  ): Promise<InscriptionForm> {
-    const inscriptionForm = new InscriptionForm();
-    inscriptionForm.registration_doc = registrationDoc;
-    inscriptionForm.semester_grade_chart_doc = semesterGradeChartDoc;
-    inscriptionForm.re_entry_doc = reEntryDoc;
-    inscriptionForm.english_certificate_doc = englishCertificateDoc;
-    inscriptionForm.enrollment_certificate_doc = enrollmentCertificateDoc;
-    inscriptionForm.approval_doc = approvalDoc;
+  ): Promise<InscriptionDocumentsEntity> {
+    const inscriptionForm = new InscriptionDocumentsEntity();
+    inscriptionForm.registrationDoc = registrationDoc;
+    inscriptionForm.semesterGradeChartDoc = semesterGradeChartDoc;
+    inscriptionForm.reEntryDoc = reEntryDoc;
+    inscriptionForm.englishCertificateDoc = englishCertificateDoc;
+    inscriptionForm.enrollmentCertificateDoc = enrollmentCertificateDoc;
+    inscriptionForm.approvalDoc = approvalDoc;
     return this.inscriptionFormRepository.save(inscriptionForm);
   }
 
@@ -38,35 +38,35 @@ export class InscriptionFormService {
       enrollmentCertificateDoc?: string;
       approvalDoc?: string;
     },
-  ): Promise<InscriptionForm> {
+  ): Promise<InscriptionDocumentsEntity> {
     const inscriptionForm = await this.inscriptionFormRepository.findOne({ where: { id } });
     if (!inscriptionForm) {
       throw new NotFoundException(`Formulario de inscripción con ID ${id} no encontrado`);
     }
   
     if (updatedFiles.registrationDoc !== undefined) {
-      inscriptionForm.registration_doc = updatedFiles.registrationDoc;
+      inscriptionForm.registrationDoc = updatedFiles.registrationDoc;
     }
     if (updatedFiles.semesterGradeChartDoc !== undefined) {
-      inscriptionForm.semester_grade_chart_doc = updatedFiles.semesterGradeChartDoc;
+      inscriptionForm.semesterGradeChartDoc = updatedFiles.semesterGradeChartDoc;
     }
     if (updatedFiles.reEntryDoc !== undefined) {
-      inscriptionForm.re_entry_doc = updatedFiles.reEntryDoc;
+      inscriptionForm.reEntryDoc = updatedFiles.reEntryDoc;
     }
     if (updatedFiles.englishCertificateDoc !== undefined) {
-      inscriptionForm.english_certificate_doc = updatedFiles.englishCertificateDoc;
+      inscriptionForm.englishCertificateDoc = updatedFiles.englishCertificateDoc;
     }
     if (updatedFiles.enrollmentCertificateDoc !== undefined) {
-      inscriptionForm.enrollment_certificate_doc = updatedFiles.enrollmentCertificateDoc;
+      inscriptionForm.enrollmentCertificateDoc = updatedFiles.enrollmentCertificateDoc;
     }
     if (updatedFiles.approvalDoc !== undefined) {
-      inscriptionForm.approval_doc = updatedFiles.approvalDoc;
+      inscriptionForm.approvalDoc = updatedFiles.approvalDoc;
     }
   
     return this.inscriptionFormRepository.save(inscriptionForm);
   }
 
-  async getAllInscriptionForms(): Promise<InscriptionForm[]> {
+  async getAllInscriptionForms(): Promise<InscriptionDocumentsEntity[]> {
     return this.inscriptionFormRepository.find();
   }
 

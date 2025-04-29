@@ -1,29 +1,29 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Record } from '../entities/record.entity';
+import { RecordEntity } from '../entities/record.entity';
 
 @Injectable()
 export class RecordService {
   constructor(
-    @InjectRepository(Record)
-    private readonly recordRepository: Repository<Record>,
+    @InjectRepository(RecordEntity)
+    private readonly recordRepository: Repository<RecordEntity>,
   ) {}
 
   async createRecord(
-    personalDocumentsId: string,
-    inscriptionFormId: string,
-    degreeId: string,
-  ): Promise<Record> {
+    // personalDocumentsId: string,
+    // inscriptionFormId: string,
+    // degreeId: string,
+  ): Promise<RecordEntity> {
     const record = this.recordRepository.create({
-      personal_documents_id: personalDocumentsId,
-      inscription_form_id: inscriptionFormId,
-      degree_id: degreeId,
+      // personal_documents_id: personalDocumentsId,
+      // inscription_form_id: inscriptionFormId,
+      // degree_id: degreeId,
     });
     return this.recordRepository.save(record);
   }
 
-  async getRecordById(id: string): Promise<Record> {
+  async getRecordById(id: string): Promise<RecordEntity> {
     const record = await this.recordRepository.findOne({ where: { id } });
     if (!record) {
       throw new NotFoundException(`Record con ID ${id} no encontrado`);
@@ -33,24 +33,24 @@ export class RecordService {
 
   async updateRecord(
     id: string,
-    personalDocumentsId?: string,
-    inscriptionFormId?: string,
-    degreeId?: string,
-  ): Promise<Record> {
+    // personalDocumentsId?: string,
+    // inscriptionFormId?: string,
+    // degreeId?: string,
+  ): Promise<RecordEntity> {
     const record = await this.recordRepository.findOne({ where: { id } });
-    if (!record) {
-      throw new NotFoundException(`Record con ID ${id} no encontrado`);
-    }
+    // if (!record) {
+    //   throw new NotFoundException(`Record con ID ${id} no encontrado`);
+    // }
 
-    if (personalDocumentsId) {
-      record.personal_documents_id = personalDocumentsId;
-    }
-    if (inscriptionFormId) {
-      record.inscription_form_id = inscriptionFormId;
-    }
-    if (degreeId) {
-      record.degree_id = degreeId;
-    }
+    // if (personalDocumentsId) {
+    //   record.personal_documents_id = personalDocumentsId;
+    // }
+    // if (inscriptionFormId) {
+    //   record.inscription_form_id = inscriptionFormId;
+    // }
+    // if (degreeId) {
+    //   record.degree_id = degreeId;
+    // }
 
     return this.recordRepository.save(record);
   }

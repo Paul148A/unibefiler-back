@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { RoleEntity } from './rol.entity';
 import { StatusEntity } from './status.entity';
-import { Record } from 'src/upload_files/entities/record.entity';
+import { RecordEntity } from 'src/upload_files/entities/record.entity';
 
 @Entity('users', { schema: 'auth' })
 export class UserEntity {
@@ -24,9 +24,9 @@ export class UserEntity {
   @JoinColumn({ name: 'status_id' })
   status: StatusEntity;
 
-  @OneToOne(() => Record, (record) => record.user)
+  @OneToOne(() => RecordEntity, (record) => record.user)
   @JoinColumn({ name: 'record_id' })
-  record: Record;
+  record: RecordEntity;
   
   /** Columns **/
   @Column({

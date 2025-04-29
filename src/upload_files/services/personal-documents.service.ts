@@ -1,13 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { PersonalDocuments } from '../entities/personal-documents.entity';
+import { PersonalDocumentsEntity } from '../entities/personal-documents.entity';
 
 @Injectable()
 export class PersonalDocumentsService {
   constructor(
-    @InjectRepository(PersonalDocuments)
-    private readonly personalDocumentsRepository: Repository<PersonalDocuments>,
+    @InjectRepository(PersonalDocumentsEntity)
+    private readonly personalDocumentsRepository: Repository<PersonalDocumentsEntity>,
   ) {}
 
   async savePersonalDocuments(
@@ -15,12 +15,12 @@ export class PersonalDocumentsService {
     dniDoc: string,
     votingBallotDoc: string,
     notarizDegreeDoc: string,
-  ): Promise<PersonalDocuments> {
-    const personalDocuments = new PersonalDocuments();
-    personalDocuments.picture_doc = pictureDoc;
-    personalDocuments.dni_doc = dniDoc;
-    personalDocuments.voting_ballot_doc = votingBallotDoc;
-    personalDocuments.notariz_degree_doc = notarizDegreeDoc;
+  ): Promise<PersonalDocumentsEntity> {
+    const personalDocuments = new PersonalDocumentsEntity();
+    personalDocuments.pictureDoc = pictureDoc;
+    personalDocuments.dniDoc = dniDoc;
+    personalDocuments.votingBallotDoc = votingBallotDoc;
+    personalDocuments.notarizDegreeDoc = notarizDegreeDoc;
     return this.personalDocumentsRepository.save(personalDocuments);
   }
 
@@ -32,32 +32,32 @@ export class PersonalDocumentsService {
       votingBallotDoc?: string;
       notarizDegreeDoc?: string;
     },
-  ): Promise<PersonalDocuments> {
-    const personalDocuments = await this.personalDocumentsRepository.findOne({
+  ): Promise<PersonalDocumentsEntity> {
+    const PersonalDocumentsEntity = await this.personalDocumentsRepository.findOne({
       where: { id },
     });
-    if (!personalDocuments) {
+    if (!PersonalDocumentsEntity) {
       throw new NotFoundException(
         `Documentos personales con ID ${id} no encontrados`,
       );
     }
 
     if (updatedFiles.pictureDoc !== undefined) {
-      personalDocuments.picture_doc = updatedFiles.pictureDoc;
+      PersonalDocumentsEntity.pictureDoc = updatedFiles.pictureDoc;
     }
     if (updatedFiles.dniDoc !== undefined) {
-      personalDocuments.dni_doc = updatedFiles.dniDoc;
+      PersonalDocumentsEntity.dniDoc = updatedFiles.dniDoc;
     }
     if (updatedFiles.votingBallotDoc !== undefined) {
-      personalDocuments.voting_ballot_doc = updatedFiles.votingBallotDoc;
+      PersonalDocumentsEntity.votingBallotDoc = updatedFiles.votingBallotDoc;
     }
     if (updatedFiles.notarizDegreeDoc !== undefined) {
-      personalDocuments.notariz_degree_doc = updatedFiles.notarizDegreeDoc;
+      PersonalDocumentsEntity.notarizDegreeDoc = updatedFiles.notarizDegreeDoc;
     }
-    return this.personalDocumentsRepository.save(personalDocuments);
+    return this.personalDocumentsRepository.save(PersonalDocumentsEntity);
   }
 
-  async getAllPersonalDocuments(): Promise<PersonalDocuments[]> {
+  async getAllPersonalDocuments(): Promise<PersonalDocumentsEntity[]> {
     return this.personalDocumentsRepository.find();
   }
 }

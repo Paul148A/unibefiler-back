@@ -146,14 +146,14 @@ export class UploadDegreeController {
     }
 
     const updatedFiles = {
-      topicComplainDoc: files.topic_complain_doc ? files.topic_complain_doc[0].filename : degree.topic_complain_doc,
-      topicApprovalDoc: files.topic_approval_doc ? files.topic_approval_doc[0].filename : degree.topic_approval_doc,
-      tutorAssignmentDoc: files.tutor_assignment_doc ? files.tutor_assignment_doc[0].filename : degree.tutor_assignment_doc,
-      tutorFormatDoc: files.tutor_format_doc ? files.tutor_format_doc[0].filename : degree.tutor_format_doc,
-      antiplagiarismDoc: files.antiplagiarism_doc ? files.antiplagiarism_doc[0].filename : degree.antiplagiarism_doc,
-      tutorLetter: files.tutor_letter ? files.tutor_letter[0].filename : degree.tutor_letter,
-      electiveGrade: files.elective_grade ? files.elective_grade[0].filename : degree.elective_grade,
-      academicClearance: files.academic_clearance ? files.academic_clearance[0].filename : degree.academic_clearance,
+      topicComplainDoc: files.topic_complain_doc ? files.topic_complain_doc[0].filename : degree.topicComplainDoc,
+      topicApprovalDoc: files.topic_approval_doc ? files.topic_approval_doc[0].filename : degree.topicApprovalDoc,
+      tutorAssignmentDoc: files.tutor_assignment_doc ? files.tutor_assignment_doc[0].filename : degree.tutorAssignmentDoc,
+      tutorFormatDoc: files.tutor_format_doc ? files.tutor_format_doc[0].filename : degree.tutorFormatDoc,
+      antiplagiarismDoc: files.antiplagiarism_doc ? files.antiplagiarism_doc[0].filename : degree.antiplagiarismDoc,
+      tutorLetter: files.tutor_letter ? files.tutor_letter[0].filename : degree.tutorLetter,
+      electiveGrade: files.elective_grade ? files.elective_grade[0].filename : degree.electiveGrade,
+      academicClearance: files.academic_clearance ? files.academic_clearance[0].filename : degree.academicClearance,
     };
 
     await this.degreeService.updateDegree(id, updatedFiles);

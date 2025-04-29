@@ -1,13 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Degree } from '../entities/degree.entity';
+import { DegreeDocumentsEntity } from '../entities/degree-documents.entity';
 
 @Injectable()
 export class DegreeService {
   constructor(
-    @InjectRepository(Degree)
-    private readonly degreeRepository: Repository<Degree>,
+    @InjectRepository(DegreeDocumentsEntity)
+    private readonly degreeRepository: Repository<DegreeDocumentsEntity>,
   ) {}
 
   async saveDegree(
@@ -19,21 +19,21 @@ export class DegreeService {
     tutorLetter: string,
     electiveGrade: string,
     academicClearance: string,
-  ): Promise<Degree> {
-    const degree = new Degree();
-    degree.topic_complain_doc = topicComplainDoc;
-    degree.topic_approval_doc = topicApprovalDoc;
-    degree.tutor_assignment_doc = tutorAssignmentDoc;
-    degree.tutor_format_doc = tutorFormatDoc;
-    degree.antiplagiarism_doc = antiplagiarismDoc;
-    degree.tutor_letter = tutorLetter;
-    degree.elective_grade = electiveGrade;
-    degree.academic_clearance = academicClearance;
+  ): Promise<DegreeDocumentsEntity> {
+    const degree = new DegreeDocumentsEntity();
+    degree.topicComplainDoc = topicComplainDoc;
+    degree.topicApprovalDoc = topicApprovalDoc;
+    degree.tutorAssignmentDoc = tutorAssignmentDoc;
+    degree.tutorFormatDoc = tutorFormatDoc;
+    degree.antiplagiarismDoc = antiplagiarismDoc;
+    degree.tutorLetter = tutorLetter;
+    degree.electiveGrade = electiveGrade;
+    degree.academicClearance = academicClearance;
     return this.degreeRepository.save(degree);
   }
 
 // OBTENER
-  async getAllDegrees(): Promise<Degree[]> {
+  async getAllDegrees(): Promise<DegreeDocumentsEntity[]> {
     return this.degreeRepository.find();
   }
 
@@ -50,41 +50,41 @@ export class DegreeService {
       electiveGrade?: string;
       academicClearance?: string;
     },
-  ): Promise<Degree> {
+  ): Promise<DegreeDocumentsEntity> {
     const degree = await this.degreeRepository.findOne({ where: { id } });
     if (!degree) {
       throw new NotFoundException(`Grado con ID ${id} no encontrado`);
     }
 
     if (updatedFiles.topicComplainDoc) {
-      degree.topic_complain_doc = updatedFiles.topicComplainDoc;
+      degree.topicComplainDoc = updatedFiles.topicComplainDoc;
     }
     if (updatedFiles.topicApprovalDoc) {
-      degree.topic_approval_doc = updatedFiles.topicApprovalDoc;
+      degree.topicApprovalDoc = updatedFiles.topicApprovalDoc;
     }
     if (updatedFiles.tutorAssignmentDoc) {
-      degree.tutor_assignment_doc = updatedFiles.tutorAssignmentDoc;
+      degree.tutorAssignmentDoc = updatedFiles.tutorAssignmentDoc;
     }
     if (updatedFiles.tutorFormatDoc) {
-      degree.tutor_format_doc = updatedFiles.tutorFormatDoc;
+      degree.tutorFormatDoc = updatedFiles.tutorFormatDoc;
     }
     if (updatedFiles.antiplagiarismDoc) {
-      degree.antiplagiarism_doc = updatedFiles.antiplagiarismDoc;
+      degree.antiplagiarismDoc = updatedFiles.antiplagiarismDoc;
     }
     if (updatedFiles.tutorLetter) {
-      degree.tutor_letter = updatedFiles.tutorLetter;
+      degree.tutorLetter = updatedFiles.tutorLetter;
     }
     if (updatedFiles.electiveGrade) {
-      degree.elective_grade = updatedFiles.electiveGrade;
+      degree.electiveGrade = updatedFiles.electiveGrade;
     }
     if (updatedFiles.academicClearance) {
-      degree.academic_clearance = updatedFiles.academicClearance;
+      degree.academicClearance = updatedFiles.academicClearance;
     }
 
     return this.degreeRepository.save(degree);
   }
 
-  async getDegreeById(id: string): Promise<Degree> {
+  async getDegreeById(id: string): Promise<DegreeDocumentsEntity> {
     const degree = await this.degreeRepository.findOne({ where: { id } });
     if (!degree) {
       throw new NotFoundException(`Grado con ID ${id} no encontrado`);
