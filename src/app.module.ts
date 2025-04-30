@@ -10,9 +10,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { PersonalDocumentsEntity } from './upload_files/entities/personal-documents.entity';
 import { InscriptionDocumentsEntity } from './upload_files/entities/inscription-documents.entity';
 import { DegreeDocumentsEntity } from './upload_files/entities/degree-documents.entity';
-import { FilesModule } from './upload_files/files.module';
 import { RecordEntity } from './upload_files/entities/record.entity';
 import { GradeEnrollmentEntity } from './upload_files/entities/grade-enrollment.entity';
+import { FilesModule } from './upload_files/files.module';
+import { EnrollmentDocEntity } from './upload_files/entities/enrollment-doc.entity';
+import { UserEntity } from './auth/entities/user.entity';
+import { RoleEntity } from './auth/entities/rol.entity';
+import { StatusEntity } from './auth/entities/status.entity';
+
 
 
 @Module({
@@ -30,23 +35,33 @@ import { GradeEnrollmentEntity } from './upload_files/entities/grade-enrollment.
       }),
     }),
 
-    // TypeOrmModule.forRootAsync({
-    //   imports: [ConfigModule],
-    //   inject: [ConfigService],
-    //   useFactory: (configService: ConfigService) => ({
-    //     type: 'postgres',
-    //     host: configService.get<string>('DB_HOST'),
-    //     port: configService.get<number>('DB_PORT'),
-    //     username: configService.get<string>('DB_USER'),
-    //     password: configService.get<string>('DB_PASSWORD'),
-    //     database: configService.get<string>('DB_NAME'),
-    //     entities: [PersonalDocumentsEntity, InscriptionDocumentsEntity, DegreeDocumentsEntity, RecordEntity, GradeEnrollmentEntity],
-    //     synchronize: false,
-    //   }),
-    // }),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres',
+        host: configService.get<string>('DB_HOST'),
+        port: configService.get<number>('DB_PORT'),
+        username: configService.get<string>('DB_USER'),
+        password: configService.get<string>('DB_PASSWORD'),
+        database: configService.get<string>('DB_NAME'),
+        entities: [
+          PersonalDocumentsEntity, 
+          InscriptionDocumentsEntity, 
+          DegreeDocumentsEntity, 
+          RecordEntity, 
+          GradeEnrollmentEntity,
+          EnrollmentDocEntity,
+          UserEntity,
+          RoleEntity,
+          StatusEntity
+        ],
+        synchronize: false,
+      }),
+    }),
 
-    // AuthModule,
-    // FilesModule,
+    AuthModule,
+    FilesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

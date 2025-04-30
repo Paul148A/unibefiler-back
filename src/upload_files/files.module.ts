@@ -12,14 +12,16 @@ import { UploadDegreeController } from './controller/degree.controller';
 import { RecordEntity } from './entities/record.entity';
 import { RecordService } from './services/record.service';
 import { RecordController } from './controller/record.controller';
+import { GradeEnrollmentEntity } from './entities/grade-enrollment.entity';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
-      PersonalDocumentsEntity,
-      InscriptionDocumentsEntity,
-      DegreeDocumentsEntity,
-      RecordEntity,
+      PersonalDocumentsEntity, 
+      InscriptionDocumentsEntity, 
+      DegreeDocumentsEntity, 
+      RecordEntity, 
+      GradeEnrollmentEntity
     ]),
   ],
   controllers: [
