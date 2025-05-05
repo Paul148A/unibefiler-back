@@ -70,8 +70,11 @@ export class UserEntity {
     comment: 'Verificar contraseña del usuario',
   })
   password_verification: string;
-
-  @Column({ name: 'record_id', nullable: true })
-  record_id: string;
   
+  @Column({
+    type: 'varchar',
+    name: 'profile_image',
+    comment: 'Imagen de perfil del usuario',
+  })
+  profile_image: string;
 }

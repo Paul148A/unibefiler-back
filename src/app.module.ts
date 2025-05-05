@@ -6,19 +6,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import * as Joi from 'joi';
 import { config } from './config/config';
 import { environments } from './enviroments';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { PersonalDocumentsEntity } from './upload_files/entities/personal-documents.entity';
-import { InscriptionDocumentsEntity } from './upload_files/entities/inscription-documents.entity';
-import { DegreeDocumentsEntity } from './upload_files/entities/degree-documents.entity';
-import { RecordEntity } from './upload_files/entities/record.entity';
-import { GradeEnrollmentEntity } from './upload_files/entities/grade-enrollment.entity';
 import { FilesModule } from './upload_files/files.module';
-import { EnrollmentDocEntity } from './upload_files/entities/enrollment-doc.entity';
-import { UserEntity } from './auth/entities/user.entity';
-import { RoleEntity } from './auth/entities/rol.entity';
-import { StatusEntity } from './auth/entities/status.entity';
-
-
 
 @Module({
   imports: [
@@ -32,31 +20,6 @@ import { StatusEntity } from './auth/entities/status.entity';
         DB_PASSWORD: Joi.string().required(),
         DB_PORT: Joi.number().required(),
         DB_USER: Joi.string().required(),
-      }),
-    }),
-
-    TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        host: configService.get<string>('DB_HOST'),
-        port: configService.get<number>('DB_PORT'),
-        username: configService.get<string>('DB_USER'),
-        password: configService.get<string>('DB_PASSWORD'),
-        database: configService.get<string>('DB_NAME'),
-        entities: [
-          PersonalDocumentsEntity, 
-          InscriptionDocumentsEntity, 
-          DegreeDocumentsEntity, 
-          RecordEntity, 
-          GradeEnrollmentEntity,
-          EnrollmentDocEntity,
-          UserEntity,
-          RoleEntity,
-          StatusEntity
-        ],
-        synchronize: false,
       }),
     }),
 

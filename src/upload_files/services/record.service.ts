@@ -1,12 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { RecordEntity } from '../entities/record.entity';
+import { UploadFilesRepositoryEnum } from '../enums/upload-files-repository.enum';
 
 @Injectable()
 export class RecordService {
   constructor(
-    @InjectRepository(RecordEntity)
+    @Inject(UploadFilesRepositoryEnum.RECORD_REPOSITORY)
     private readonly recordRepository: Repository<RecordEntity>,
   ) {}
 

@@ -1,12 +1,13 @@
 import {DataSource} from 'typeorm';
-import { ConfigEnum } from 'src/auth/enums/repository.enum';
-import { UploadFilesRepositoryEnum } from '../enums/upload-files-repository.enum';
+import { ConfigEnum, UploadFilesRepositoryEnum } from '../enums/upload-files-repository.enum';
 import { RecordEntity } from '../entities/record.entity';
 import { PersonalDocumentsEntity } from '../entities/personal-documents.entity';
 import { InscriptionDocumentsEntity } from '../entities/inscription-documents.entity';
 import { DegreeDocumentsEntity } from '../entities/degree-documents.entity';
+import { GradeEnrollmentEntity } from '../entities/grade-enrollment.entity';
+import { EnrollmentDocEntity } from '../entities/enrollment-doc.entity';
 
-export const authProviders = [
+export const uploadFilesProviders = [
     {
         provide: UploadFilesRepositoryEnum.RECORD_REPOSITORY,
         useFactory: (dataSource: DataSource) => dataSource.getRepository(RecordEntity),
@@ -27,4 +28,14 @@ export const authProviders = [
         useFactory: (dataSource: DataSource) => dataSource.getRepository(DegreeDocumentsEntity),
         inject: [ConfigEnum.PG_DATA_SOURCE],
     },
+    {
+        provide: UploadFilesRepositoryEnum.GRADE_ENROLLMENT_REPOSITORY,
+        useFactory: (dataSource: DataSource) => dataSource.getRepository(GradeEnrollmentEntity),
+        inject: [ConfigEnum.PG_DATA_SOURCE],
+    },
+    {
+        provide: UploadFilesRepositoryEnum.ENROLLMENT_DOC_REPOSITORY,
+        useFactory: (dataSource: DataSource) => dataSource.getRepository(EnrollmentDocEntity),
+        inject: [ConfigEnum.PG_DATA_SOURCE],
+    }
 ];

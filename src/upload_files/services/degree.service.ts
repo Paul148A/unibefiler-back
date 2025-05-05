@@ -1,12 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { DegreeDocumentsEntity } from '../entities/degree-documents.entity';
+import { UploadFilesRepositoryEnum } from '../enums/upload-files-repository.enum';
 
 @Injectable()
 export class DegreeService {
   constructor(
-    @InjectRepository(DegreeDocumentsEntity)
+    @Inject(UploadFilesRepositoryEnum.DEGREE_DOCUMENTS_REPOSITORY)
     private readonly degreeRepository: Repository<DegreeDocumentsEntity>,
   ) {}
 
