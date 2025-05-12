@@ -1,5 +1,5 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { DeleteResult, Repository } from 'typeorm';
 import { DegreeDocumentsEntity } from '../entities/degree-documents.entity';
 import { UploadFilesRepositoryEnum } from '../enums/upload-files-repository.enum';
 
@@ -91,5 +91,9 @@ export class DegreeService {
     }
     return degree;
   }
+
+  async deleteDegree(id: string): Promise<DeleteResult> {
+  return this.degreeRepository.delete(id);
+}
 
 }

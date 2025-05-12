@@ -168,4 +168,13 @@ export class UploadDegreeController {
     return { message: 'Documentos de grado obtenidos correctamente', degrees };
   }
 
+  @Delete('delete-degree/:id')
+async deleteDegree(@Param('id') id: string) {
+  const result = await this.degreeService.deleteDegree(id);
+  if (result.affected === 0) {
+    throw new NotFoundException(`Documento de grado con ID ${id} no encontrado`);
+  }
+  return { message: 'Documento de grado eliminado correctamente' };
+}
+
 }
