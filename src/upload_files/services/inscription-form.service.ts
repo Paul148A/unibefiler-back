@@ -70,4 +70,9 @@ export class InscriptionFormService {
     return this.inscriptionFormRepository.find();
   }
 
+  async deleteInscriptionForm(id: string): Promise<any> {
+  const result = await this.inscriptionFormRepository.delete(id);
+  return result;
+}
+
 }

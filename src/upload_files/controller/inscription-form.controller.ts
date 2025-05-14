@@ -1,4 +1,4 @@
-import { Controller, Post, UploadedFiles, UseInterceptors, BadRequestException, Get, Put, Param, NotFoundException } from '@nestjs/common';
+import { Controller, Post, UploadedFiles, UseInterceptors, BadRequestException, Get, Put, Param, NotFoundException, Delete } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
@@ -165,5 +165,23 @@ export class UploadInscriptionFormController {
     return { message: 'Formularios de inscripción obtenidos correctamente', inscriptionForms };
   }
   
-  
+  @Delete('delete-inscription-form/:id')
+async deleteInscriptionForm(@Param('id') id: string) {
+  try {
+    const deletedInscriptionForm = await this.inscriptionFormService.deleteInscriptionForm(id);
+    
+    if (!deletedInscriptionForm) {
+      throw new NotFoundException(`Formulario de inscripción con ID ${id} no encontrado`);
+    }
+
+    return { 
+      message: 'Formulario de inscripción eliminado correctamente',
+      inscriptionForm: deletedInscriptionForm
+    };  } catch (error) {
+    if (error instanceof NotFoundException) {
+      throw error;
+    }
+    throw new BadRequestException('Error al eliminar el formulario de inscripción');
+  }
+}
 }
