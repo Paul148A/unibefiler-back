@@ -2,13 +2,12 @@ import { Controller, Post, HttpCode, HttpStatus, Body, Get, Param, ParseUUIDPipe
 import { ApiTags, ApiOperation } from "@nestjs/swagger";
 import { ResponseHttpModel } from "../models/response-http.model";
 import { RoleDto } from "../dto/role/role.dto";
-import { FilterRoleDto } from "../dto/role/filter-rol.dto";
 import { UpdateRoleDto } from "../dto/role/update-rol.dto";
 import { RolesService } from "../services/rol.service";
 import { RoleEntity } from "../entities/rol.entity";
 
 @ApiTags('Roles')
-@Controller('roles')
+@Controller('api1/roles')
 export class RolesController {
   constructor(private rolesService: RolesService) {}
 
@@ -28,11 +27,11 @@ export class RolesController {
   @ApiOperation({ summary: 'Find All Roles' })
   @Get()
   @HttpCode(HttpStatus.OK)
-  async findAll(@Query() params: FilterRoleDto): Promise<ResponseHttpModel> {
-    const serviceResponse = await this.rolesService.findAll(params);
+  async findAll(): Promise<ResponseHttpModel> {
+    const serviceResponse = await this.rolesService.findAll();
 
     return {
-      data: serviceResponse.data,
+      data: serviceResponse,
       message: 'Todos los roles',
       title: 'Roles encontrados',
     };

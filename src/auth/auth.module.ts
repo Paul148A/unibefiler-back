@@ -12,6 +12,10 @@ import { JwtStrategy } from "./strategy/jwt.strategy";
 import { JwtService } from "./services/jwt.service";
 import { JwtCookieStrategy } from "./strategy/cookie.strategy";
 import { FilesModule } from "src/upload_files/files.module";
+import { RolesService } from "./services/rol.service";
+import { StatusService } from "./services/status.service";
+import { RolesController } from "./controllers/rol.controller";
+import { StatusController } from "./controllers/status.controller";
 
 
 @Global()
@@ -25,9 +29,9 @@ import { FilesModule } from "src/upload_files/files.module";
             signOptions: { expiresIn: '1h' }, 
         }),
     ],
-    controllers: [AuthController, UsersController],
-    providers: [...authProviders, AuthService, UsersService, JwtStrategy, JwtService, JwtCookieStrategy],
-    exports: [AuthService, UsersService, JwtStrategy, JwtService],
+    controllers: [AuthController, UsersController, RolesController, StatusController],
+    providers: [...authProviders, AuthService, UsersService, JwtStrategy, JwtService, JwtCookieStrategy, RolesService, StatusService],
+    exports: [AuthService, UsersService, JwtStrategy, JwtService, RolesService, StatusService],
 })
 
 export class AuthModule {

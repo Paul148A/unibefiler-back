@@ -19,7 +19,7 @@ export class UsersController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() payload: CreateUserDto): Promise<ResponseHttpModel> {
-    const serviceResponse = await this.usersService.createWithRecord(payload);
+    const serviceResponse = await this.usersService.createUserWithRecord(payload);
     return {
       data: {
         user: serviceResponse.user,
@@ -107,23 +107,4 @@ export class UsersController {
       title: `Usuario encontrado`,
     };
   }
-<<<<<<< HEAD
-
-  @ApiOperation({ summary: 'Find By Role' })
-  @UseGuards(AuthGuard('jwt-cookie'), RolesGuard)
-  @Roles('admin')
-  @Get('roles/:role')
-  @HttpCode(HttpStatus.OK)
-  async findUsersByRole(@Param('role') role: string): Promise<ResponseHttpModel> {
-    const serviceResponse = await this.usersService.findUsersByRole(role);
-
-    return {
-      data: serviceResponse as UserEntity[],
-      message: `show ${role}`,
-      title: `Usuarios encontrados`,
-    };
-  }
 }
-=======
-}
->>>>>>> 10f2af07843453ea8c81ac801a64a64cdf48ba27

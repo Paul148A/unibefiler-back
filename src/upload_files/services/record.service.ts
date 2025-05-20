@@ -9,17 +9,7 @@ export class RecordService {
   constructor(
     @Inject(UploadFilesRepositoryEnum.RECORD_REPOSITORY)
     private readonly recordRepository: Repository<RecordEntity>,
-  ) {}
-
-  async createRecordWithTransaction(userId: string, queryRunner: QueryRunner): Promise<RecordEntity> {
-  const code = `REC-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-  
-  const record = new RecordEntity();
-  record.code = code;
-  record.user = { id: userId } as UserEntity;
-  
-  return await queryRunner.manager.save(RecordEntity, record);
-}
+  ) { }
 
   async createRecord(userId: string): Promise<RecordEntity> {
     const code = `REC-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
@@ -59,5 +49,5 @@ export class RecordService {
     return this.recordRepository.find({
       relations: ['user']
     });
-}
+  }
 }

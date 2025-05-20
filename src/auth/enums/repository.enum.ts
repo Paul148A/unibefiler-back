@@ -1,6 +1,7 @@
 export enum AuthRepositoryEnum {
     ROLE_REPOSITORY = 'ROLE_REPOSITORY',
     USER_REPOSITORY = 'USER_REPOSITORY',
+    STATUS_REPOSITORY = 'STATUS_REPOSITORY',
 }
 
 export enum ConfigEnum {

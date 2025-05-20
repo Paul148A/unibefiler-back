@@ -24,9 +24,6 @@ export class ReadUserDto extends UserDto {
   readonly password;
 
   @Expose()
-  readonly password_verification;
-
-  @Expose()
   readonly status: StatusEntity;
 
   @Expose()

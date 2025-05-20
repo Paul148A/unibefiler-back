@@ -1,8 +1,16 @@
-import { PickType } from "@nestjs/swagger";
-import { UserDto } from "./user.dto";
 
+export class CreateUserDto {
+    readonly role: string;
 
-export class CreateUserDto extends PickType(UserDto, [
-    'last_names', 'names','email','identification', 'password','role', 'status'
-]) {
+    readonly status: string;
+
+    readonly names: string;
+
+    readonly last_names: string;
+
+    readonly identification: string;
+
+    readonly email: string;
+
+    readonly password: string;
 }

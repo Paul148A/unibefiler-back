@@ -28,8 +28,6 @@ export class UserEntity {
     cascade: true,
     eager: true
   })
-  
-  @JoinColumn()
   record: RecordEntity;
 
   /** Columns **/

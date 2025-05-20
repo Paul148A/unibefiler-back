@@ -20,27 +20,11 @@ export class RolesService {
     return await this.repository.save(newRole);
   }
 
-  async findAll(params?: FilterRoleDto): Promise<ServiceResponseHttpModel> {
-    // Filtrar por nombre si se proporciona
-    const where: any = {};
-    if (params?.name) {
-      where.name = ILike(`%${params.name}%`);
-    }
+  async findAll(): Promise<RoleEntity[]> {
+    const roles = await this.repository.find();
 
-    // Ordenar por nombre si se proporciona
-    const order = {};
-    if (params?.sort) {
-      order[params.sort] = params.order || 'ASC';
-    }
-
-    const [data, total] = await this.repository.findAndCount({
-      where,
-      order,
-      take: params?.limit,
-      skip: params?.page * params?.limit,
-    });
-
-    return { data };
+    return roles
+    
   }
 
   async findOne(id: string): Promise<RoleEntity> {
