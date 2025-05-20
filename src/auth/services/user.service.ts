@@ -19,9 +19,7 @@ export class UsersService {
     }
 
     async create(payload: CreateUserDto): Promise<UserEntity> {
-        // console.log("RECIBIDO DE PAYLOAD",payload)
         const newUser = this.repository.create(payload);
-        // console.log("RECIBIDO DE USER",newUser)
         return await this.repository.save(newUser);
     }
 
@@ -100,5 +98,18 @@ export class UsersService {
     async removeAll(payload: UserEntity[]): Promise<UserEntity> {
         const usersDeleted = await this.repository.softRemove(payload);
         return usersDeleted[0];
+    }
+
+    async findUsersByRole(role: string): Promise<UserEntity[]> {
+        const users = await this.repository.find({
+            where: {role: {name: ILike(`%${role}%`)}}, // ILike is case insensitive
+            relations: {role: true, status: true},
+        });
+
+        if (!users) {
+            throw new NotFoundException('No existen usuarios con el rol: ' + role);
+        }
+
+        return users;
     }
 }

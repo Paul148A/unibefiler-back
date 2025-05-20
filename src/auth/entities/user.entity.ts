@@ -63,18 +63,4 @@ export class UserEntity {
     comment: 'Contraseña del usuario',
   })
   password: string;
-
-  @Column({
-    type: 'varchar',
-    name: 'password_verification',
-    comment: 'Verificar contraseña del usuario',
-  })
-  password_verification: string;
-  
-  @Column({
-    type: 'varchar',
-    name: 'profile_image',
-    comment: 'Imagen de perfil del usuario',
-  })
-  profile_image: string;
 }

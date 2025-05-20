@@ -1,4 +1,4 @@
-import { Controller, Post, HttpCode, HttpStatus, Body, Get, Query, Param, ParseUUIDPipe, Put, Delete, Patch } from "@nestjs/common";
+import { Controller, Post, HttpCode, HttpStatus, Body, Get, Query, Param, ParseUUIDPipe, Put, Delete, Patch, UseGuards } from "@nestjs/common";
 import { ApiTags, ApiOperation } from "@nestjs/swagger";
 import { CreateUserDto } from "../dto/user/create-user.dto";
 import { FilterUserDto } from "../dto/user/filter-user.dto";
@@ -6,11 +6,14 @@ import { UpdateUserDto } from "../dto/user/update-user.dto";
 import { UserEntity } from "../entities";
 import { UsersService } from "../services/user.service";
 import { ResponseHttpModel } from "../models/response-http.model";
+import { AuthGuard } from "@nestjs/passport";
+import { Roles } from "../custom-role-guard/roles.decorator";
+import { RolesGuard } from "../custom-role-guard/roles.guard";
 
 @ApiTags('Users')
-@Controller('users')
+@Controller('api1/users')
 export class UsersController {
-  constructor(private usersService: UsersService) {}
+  constructor(private usersService: UsersService) { }
 
   @ApiOperation({ summary: 'Create One' })
   @Post()
@@ -63,7 +66,7 @@ export class UsersController {
       title: `Actualizado`,
     };
   }
-  
+
   @ApiOperation({ summary: 'Remove One' })
   @Delete(':id')
   @HttpCode(HttpStatus.CREATED)
@@ -100,6 +103,21 @@ export class UsersController {
       data: serviceResponse as FilterUserDto,
       message: `show ${identification}`,
       title: `Usuario encontrado`,
+    };
+  }
+
+  @ApiOperation({ summary: 'Find By Role' })
+  @UseGuards(AuthGuard('jwt-cookie'), RolesGuard)
+  @Roles('admin')
+  @Get('roles/:role')
+  @HttpCode(HttpStatus.OK)
+  async findUsersByRole(@Param('role') role: string): Promise<ResponseHttpModel> {
+    const serviceResponse = await this.usersService.findUsersByRole(role);
+
+    return {
+      data: serviceResponse as UserEntity[],
+      message: `show ${role}`,
+      title: `Usuarios encontrados`,
     };
   }
 }

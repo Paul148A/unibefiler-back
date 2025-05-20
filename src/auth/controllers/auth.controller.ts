@@ -59,14 +59,13 @@ export class AuthController {
     @UseGuards(AuthGuard('jwt-cookie'))
     @Get('check-auth')
     async checkAuth(@Request() req) {
-        // req.user contiene la información del usuario extraída del token JWT
         const user = req.user;
 
         return {
             isAuthenticated: true,
             user: {
-                id: user.sub, // ID del usuario
-                role: user.role, // Rol del usuario
+                id: user.sub,
+                role: user.role,
             },
         };
     }

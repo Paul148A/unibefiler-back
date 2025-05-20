@@ -14,11 +14,9 @@ export class AuthService {
     constructor(
         @Inject(AuthRepositoryEnum.USER_REPOSITORY)
         private repository: Repository<UserEntity>,
-        //@Inject(config.KEY) private configService: ConfigType<typeof config>,
         private readonly jwtService: JwtService,
     ) {
     }
-
 
     async login(payload: LoginDto): Promise<{ data: { user: any; token: string } }> {
         const user: UserEntity = await this.repository.findOne({
