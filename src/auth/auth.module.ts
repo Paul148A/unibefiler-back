@@ -11,11 +11,14 @@ import { JwtModule } from "@nestjs/jwt";
 import { JwtStrategy } from "./strategy/jwt.strategy";
 import { JwtService } from "./services/jwt.service";
 import { JwtCookieStrategy } from "./strategy/cookie.strategy";
+import { FilesModule } from "src/upload_files/files.module";
+
 
 @Global()
 @Module({
     imports: [
         DatabaseModule,
+        FilesModule,
         PassportModule.register({ defaultStrategy: 'jwt-cookie' }),
         JwtModule.register({
             secret: 'UnibeFilerSecretKey@*',

@@ -15,15 +15,17 @@ import { RolesGuard } from "../custom-role-guard/roles.guard";
 export class UsersController {
   constructor(private usersService: UsersService) { }
 
-  @ApiOperation({ summary: 'Create One' })
+  @ApiOperation({ summary: 'Usuario creado con un record automaticamente' })
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() payload: CreateUserDto): Promise<ResponseHttpModel> {
-    const serviceResponse = await this.usersService.create(payload);
-
+    const serviceResponse = await this.usersService.createWithRecord(payload);
     return {
-      data: serviceResponse,
-      message: 'User created',
+      data: {
+        user: serviceResponse.user,
+        record: serviceResponse.record
+      },
+      message: 'Usuario creado con un record automaticamente',
       title: 'Created',
     };
   }
@@ -105,6 +107,7 @@ export class UsersController {
       title: `Usuario encontrado`,
     };
   }
+<<<<<<< HEAD
 
   @ApiOperation({ summary: 'Find By Role' })
   @UseGuards(AuthGuard('jwt-cookie'), RolesGuard)
@@ -121,3 +124,6 @@ export class UsersController {
     };
   }
 }
+=======
+}
+>>>>>>> 10f2af07843453ea8c81ac801a64a64cdf48ba27

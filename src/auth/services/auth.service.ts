@@ -6,6 +6,8 @@ import { ServiceResponseHttpModel } from "../models/service-response-http.model"
 import { LoginDto } from "../dto/login/login.dto";
 import { JwtService } from "./jwt.service";
 import { Response } from 'express';
+import { RecordService } from "src/upload_files/services/record.service";
+// import { RecordService } from "../../upload-files/services/record.service";
 
 @Injectable()
 export class AuthService {
@@ -15,13 +17,48 @@ export class AuthService {
         @Inject(AuthRepositoryEnum.USER_REPOSITORY)
         private repository: Repository<UserEntity>,
         private readonly jwtService: JwtService,
-    ) {
+        private readonly recordService: RecordService
+    ) {}
+
+    async register(payload: any): Promise<ServiceResponseHttpModel> {
+        try {
+            // 1. Verificar si el usuario ya existe
+            const existingUser = await this.repository.findOne({
+                where: { identification: payload.identification }
+            });
+            if (existingUser) {
+                throw new BadRequestException('El usuario ya existe');
+            }
+            // 2. Crear el usuario
+            const user = new UserEntity();
+            Object.assign(user, payload);
+            const createdUser = await this.repository.save(user);
+
+            // 3. Crear automáticamente el record asociado
+            const record = await this.recordService.createRecord(createdUser.id);
+
+            // 4. Retornar respuesta sin password
+            const { password, ...userData } = createdUser;
+
+            return {
+                data: {
+                    user: userData,
+                    record: {
+                        id: record.id,
+                        code: record.code
+                    },
+                    message: 'Usuario registrado con expediente creado automáticamente',
+                },
+            };
+        } catch (error) {
+            throw new BadRequestException(error.message || 'Error al registrar usuario');
+        }
     }
 
     async login(payload: LoginDto): Promise<{ data: { user: any; token: string } }> {
         const user: UserEntity = await this.repository.findOne({
             where: { identification: payload.identification },
-            relations: { role: true },
+            relations: { role: true, record: true },
         });
 
         if (!user || !(await this.checkPassword(payload.password, user))) {
@@ -81,7 +118,6 @@ export class AuthService {
         }
 
         user.password = payload.newPassword;
-
         await this.repository.save(user);
         return { data: true };
     }
@@ -94,11 +130,10 @@ export class AuthService {
             await this.repository.save(userRest);
             return user;
         }
+        return null;
     }
 
     private async comparePassword(password: string, password_verification: string): Promise<boolean> {
-        const isMatch = password === password_verification;
-        return isMatch;
+        return password === password_verification;
     }
-
 }

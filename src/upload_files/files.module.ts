@@ -30,10 +30,10 @@ import { DatabaseModule } from 'src/database/database.module';
     RecordService
   ],
   exports: [
-    RecordService,
     PersonalDocumentsService,
     InscriptionFormService,
-    DegreeService
+    DegreeService,
+    RecordService
   ]
 })
 export class FilesModule { }

@@ -1,7 +1,8 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { QueryRunner, Repository } from 'typeorm';
 import { RecordEntity } from '../entities/record.entity';
 import { UploadFilesRepositoryEnum } from '../enums/upload-files-repository.enum';
+import { UserEntity } from 'src/auth/entities/user.entity';
 
 @Injectable()
 export class RecordService {
@@ -10,15 +11,21 @@ export class RecordService {
     private readonly recordRepository: Repository<RecordEntity>,
   ) {}
 
-  async createRecord(
-    // personalDocumentsId: string,
-    // inscriptionFormId: string,
-    // degreeId: string,
-  ): Promise<RecordEntity> {
+  async createRecordWithTransaction(userId: string, queryRunner: QueryRunner): Promise<RecordEntity> {
+  const code = `REC-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  
+  const record = new RecordEntity();
+  record.code = code;
+  record.user = { id: userId } as UserEntity;
+  
+  return await queryRunner.manager.save(RecordEntity, record);
+}
+
+  async createRecord(userId: string): Promise<RecordEntity> {
+    const code = `REC-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     const record = this.recordRepository.create({
-      // personal_documents_id: personalDocumentsId,
-      // inscription_form_id: inscriptionFormId,
-      // degree_id: degreeId,
+      code,
+      user: { id: userId }
     });
     return this.recordRepository.save(record);
   }
@@ -33,24 +40,9 @@ export class RecordService {
 
   async updateRecord(
     id: string,
-    // personalDocumentsId?: string,
-    // inscriptionFormId?: string,
-    // degreeId?: string,
+
   ): Promise<RecordEntity> {
     const record = await this.recordRepository.findOne({ where: { id } });
-    // if (!record) {
-    //   throw new NotFoundException(`Record con ID ${id} no encontrado`);
-    // }
-
-    // if (personalDocumentsId) {
-    //   record.personal_documents_id = personalDocumentsId;
-    // }
-    // if (inscriptionFormId) {
-    //   record.inscription_form_id = inscriptionFormId;
-    // }
-    // if (degreeId) {
-    //   record.degree_id = degreeId;
-    // }
 
     return this.recordRepository.save(record);
   }
@@ -62,4 +54,10 @@ export class RecordService {
     }
     await this.recordRepository.remove(record);
   }
+
+  async getAllRecords() {
+    return this.recordRepository.find({
+      relations: ['user']
+    });
+}
 }
