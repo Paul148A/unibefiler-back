@@ -9,7 +9,7 @@ export class RecordController {
 
   @Post()
   async create(@Body() payload: CreateRecordDto) {
-    return this.recordService.createRecord();
+      return this.recordService.createRecord(payload.userId);
   }
 
   @Get(':id')
@@ -19,6 +19,11 @@ export class RecordController {
       throw new NotFoundException(`Record con ID ${id} no encontrado`);
     }
     return record;
+  }
+
+  @Get()
+  async findAll() {
+    return this.recordService.getAllRecords();
   }
 
   @Put(':id')

@@ -12,15 +12,17 @@ import { ResponseHttpModel } from "../models/response-http.model";
 export class UsersController {
   constructor(private usersService: UsersService) {}
 
-  @ApiOperation({ summary: 'Create One' })
+  @ApiOperation({ summary: 'Usuario creado con un record automaticamente' })
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() payload: CreateUserDto): Promise<ResponseHttpModel> {
-    const serviceResponse = await this.usersService.create(payload);
-
+    const serviceResponse = await this.usersService.createWithRecord(payload);
     return {
-      data: serviceResponse,
-      message: 'User created',
+      data: {
+        user: serviceResponse.user,
+        record: serviceResponse.record
+      },
+      message: 'Usuario creado con un record automaticamente',
       title: 'Created',
     };
   }

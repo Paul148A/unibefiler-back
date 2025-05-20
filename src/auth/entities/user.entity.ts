@@ -23,37 +23,41 @@ export class UserEntity {
   @ManyToOne(() => StatusEntity, (status) => status.users)
   @JoinColumn({ name: 'status_id' })
   status: StatusEntity;
-
-  @OneToOne(() => RecordEntity, (record) => record.user)
-  @JoinColumn({ name: 'record_id' })
-  record: RecordEntity;
   
+  @OneToOne(() => RecordEntity, (record) => record.user,{
+    cascade: true,
+    eager: true
+  })
+  
+  @JoinColumn()
+  record: RecordEntity;
+
   /** Columns **/
   @Column({
     type: 'varchar',
     name: 'names',
-    comment: 'nombre del rol',
+    comment: 'nombre del usuario',
   })
   names: string;
 
   @Column({
     type: 'varchar',
     name: 'last_names',
-    comment: 'Descripcion del rol',
+    comment: 'Apellidos del usuario',
   })
   last_names: string;
   
   @Column({
     type: 'varchar',
     name: 'identification',
-    comment: 'Descripcion del rol',
+    comment: 'Numero de cedula del usuario',
   })
   identification: string;
   
   @Column({
     type: 'varchar',
     name: 'email',
-    comment: 'Descripcion del rol',
+    comment: 'Correo del usuario',
   })
   email: string;
 

@@ -8,6 +8,8 @@ import { ReadUserDto } from '../dto/user/read-user.dto';
 import { UpdateUserDto } from '../dto/user/update-user.dto';
 import { ServiceResponseHttpModel } from '../models/service-response-http.model';
 import { plainToInstance } from 'class-transformer';
+import { RecordService } from 'src/upload_files/services/record.service';
+import { RecordEntity } from 'src/upload_files/entities/record.entity';
 
 
 @Injectable()
@@ -15,8 +17,55 @@ export class UsersService {
     constructor(
         @Inject(AuthRepositoryEnum.USER_REPOSITORY)
         private repository: Repository<UserEntity>,
+        private readonly recordService: RecordService
     ) {
     }
+
+ async createUser(userData: any): Promise<UserEntity> {
+    // Iniciamos transacción
+    const queryRunner = this.repository.manager.connection.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // 1. Crear el usuario
+      const user = new UserEntity();
+      Object.assign(user, userData);
+      const createdUser = await queryRunner.manager.save(UserEntity, user);
+
+      // 2. Crear record automáticamente
+      const record = await this.recordService.createRecordWithTransaction(
+        createdUser.id, 
+        queryRunner
+      );
+
+      // Confirmar transacción
+      await queryRunner.commitTransaction();
+
+      // Asignar el record al usuario para la respuesta
+      createdUser.record = record;
+      
+      return createdUser;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async createWithRecord(payload: CreateUserDto): Promise<{user: UserEntity, record: RecordEntity}> {
+  // 1. Crear usuario
+  const user = await this.create(payload);
+  
+  // 2. Crear record automático
+  const record = await this.recordService.createRecord(user.id);
+  
+  return {
+    user,
+    record
+  };
+}
 
     async create(payload: CreateUserDto): Promise<UserEntity> {
         // console.log("RECIBIDO DE PAYLOAD",payload)

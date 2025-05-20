@@ -1,5 +1,5 @@
 import { UserEntity } from 'src/auth/entities/user.entity';
-import { Column, Entity, JoinColumn, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { PersonalDocumentsEntity } from './personal-documents.entity';
 import { InscriptionDocumentsEntity } from './inscription-documents.entity';
 import { DegreeDocumentsEntity } from './degree-documents.entity';
@@ -10,7 +10,8 @@ export class RecordEntity {
   id: string;
 
   /** Foreign keys */
-  @OneToMany(() => UserEntity, (user) => user.record)
+  @OneToOne(() => UserEntity, (user) => user.record)
+  @JoinColumn({ name: 'user_id' })
   user: UserEntity;
 
   @OneToMany(() => PersonalDocumentsEntity, (personalDocument) => personalDocument.record)
@@ -26,6 +27,7 @@ export class RecordEntity {
   @Column({
     type: 'varchar',
     name: 'code',
+    unique: true,
     comment: 'Codigo del expediente',
   })
   code: string;

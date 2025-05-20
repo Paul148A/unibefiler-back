@@ -4,12 +4,18 @@ import { LoginDto } from "../dto/login/login.dto";
 import { AuthService } from "../services/auth.service";
 import { Response } from 'express';
 import { AuthGuard } from "@nestjs/passport";
+import { CreateUserDto } from "../dto/user/create-user.dto";
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
     constructor(private authService: AuthService) {
     }
+
+    @Post('register')
+    async register(@Body() payload: CreateUserDto) {
+    return this.authService.register(payload);
+  }
 
     @ApiOperation({ summary: 'Login' })
     @Post('login')
