@@ -11,7 +11,7 @@ import { Roles } from "../custom-role-guard/roles.decorator";
 import { RolesGuard } from "../custom-role-guard/roles.guard";
 
 @ApiTags('Users')
-@Controller('api1/users')
+@Controller('users')
 export class UsersController {
   constructor(private usersService: UsersService) { }
 
