@@ -27,4 +27,11 @@ export class StatusService {
     
         return role;
       }
+
+    async findAll(): Promise<StatusEntity[]> {
+      const roles = await this.repository.find();
+  
+      return roles
+      
+    }
 }

@@ -2,9 +2,9 @@ import { RoleDto } from '../role/role.dto';
 import { StatusDto } from '../status/status.dto';
 
 export class UserDto {
-  readonly role: RoleDto;
+  readonly role_id: RoleDto;
 
-  readonly status: StatusDto;
+  readonly status_id: StatusDto;
 
   readonly names: string;
 

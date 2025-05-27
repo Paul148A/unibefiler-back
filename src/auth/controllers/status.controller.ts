@@ -1,4 +1,4 @@
-import { Controller, Post, HttpCode, HttpStatus, Body, Get, Param, ParseUUIDPipe } from "@nestjs/common";
+import { Controller, Post, HttpCode, HttpStatus, Body, Get, Param, ParseUUIDPipe, Query } from "@nestjs/common";
 import { ApiTags, ApiOperation } from "@nestjs/swagger";
 import { ResponseHttpModel } from "../models/response-http.model";
 import { StatusService } from "../services/status.service";
@@ -22,18 +22,17 @@ export class StatusController {
     };
   }
 
-//   @ApiOperation({ summary: 'Find All Roles' })
-//   @Get()
-//   @HttpCode(HttpStatus.OK)
-//   async findAll(@Query() params: FilterRoleDto): Promise<ResponseHttpModel> {
-//     const serviceResponse = await this.statusService.findAll(params);
-
-//     return {
-//       data: serviceResponse.data,
-//       message: 'Todos los roles',
-//       title: 'Roles encontrados',
-//     };
-//   }
+  @ApiOperation({ summary: 'Find All Status' })
+  @Get()
+  @HttpCode(HttpStatus.OK)
+  async findAll(): Promise<ResponseHttpModel> {
+    const serviceResponse = await this.statusService.findAll();
+    return {
+      data: serviceResponse,
+      message: 'Todos los estados',
+      title: 'Estados encontrados',
+    };
+  }
 
   @ApiOperation({ summary: 'Find One Status' })
   @Get(':id')
