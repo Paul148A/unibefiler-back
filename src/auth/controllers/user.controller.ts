@@ -33,8 +33,8 @@ export class UsersController {
   @ApiOperation({ summary: 'Find All' })
   @Get()
   @HttpCode(HttpStatus.OK)
-  async findAll(@Query() params: FilterUserDto): Promise<ResponseHttpModel> {
-    const serviceResponse = await this.usersService.findAll(params);
+  async findAll(): Promise<ResponseHttpModel> {
+    const serviceResponse = await this.usersService.findAll();
 
     return {
       data: serviceResponse.data,

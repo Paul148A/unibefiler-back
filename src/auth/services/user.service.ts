@@ -57,10 +57,9 @@ export class UsersService {
         return await this.repository.save(newUser);
     }
 
-    async findAll(params?: FilterUserDto): Promise<ServiceResponseHttpModel> {
+    async findAll(): Promise<ServiceResponseHttpModel> {
         const relations = { role: true, status: true };
 
-        //All
         const response = await this.repository.findAndCount({
             relations,
         });

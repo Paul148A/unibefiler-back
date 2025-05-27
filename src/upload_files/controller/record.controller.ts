@@ -3,7 +3,7 @@ import { RecordService } from '../services/record.service';
 import { CreateRecordDto } from '../dto/record/create-record.dto';
 import { UpdateRecordDto } from '../dto/record/update-record.dto';
 
-@Controller('records')
+@Controller('api1/records')
 export class RecordController {
   constructor(private readonly recordService: RecordService) {}
 
@@ -45,5 +45,14 @@ export class RecordController {
     }
     await this.recordService.deleteRecord(id);
     return { message: `Record con ID ${id} eliminado correctamente` };
+  }
+
+  @Get('user/:userId')
+  async findRecordByUserId(@Param('userId') userId: string) {
+    const record = this.recordService.getRecordsByUserId(userId);
+    if (!record) {
+      throw new NotFoundException(`No se encontraron records para el usuario con ID ${userId}`);
+    }
+    return record;
   }
 }

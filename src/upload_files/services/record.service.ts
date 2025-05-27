@@ -3,6 +3,7 @@ import { QueryRunner, Repository } from 'typeorm';
 import { RecordEntity } from '../entities/record.entity';
 import { UploadFilesRepositoryEnum } from '../enums/upload-files-repository.enum';
 import { UserEntity } from 'src/auth/entities/user.entity';
+import { ServiceResponseHttpModel } from 'src/auth/models/service-response-http.model';
 
 @Injectable()
 export class RecordService {
@@ -45,9 +46,22 @@ export class RecordService {
     await this.recordRepository.remove(record);
   }
 
-  async getAllRecords() {
+  async getAllRecords(): Promise<ServiceResponseHttpModel> {
+    const relations = { user: true };
+
+        const response = await this.recordRepository.findAndCount({
+            relations,
+        });
+
+        return {
+            data: response[0],
+        };
+  }
+
+  async getRecordsByUserId(userId: string): Promise<RecordEntity[]> {
     return this.recordRepository.find({
-      relations: ['user']
+      where: { user: { id: userId } },
+      relations: ['user'],
     });
   }
 }
