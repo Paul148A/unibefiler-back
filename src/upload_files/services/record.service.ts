@@ -59,9 +59,14 @@ export class RecordService {
   }
 
   async getRecordsByUserId(userId: string): Promise<RecordEntity[]> {
-    return this.recordRepository.find({
+    const relations = { user: true };
+    const records = await this.recordRepository.find({
       where: { user: { id: userId } },
-      relations: ['user'],
+      relations,
     });
+    if (!records || records.length === 0) {
+      throw new NotFoundException(`No se encontraron registros para el usuario con ID ${userId}`);
+    }
+    return records;
   }
 }
