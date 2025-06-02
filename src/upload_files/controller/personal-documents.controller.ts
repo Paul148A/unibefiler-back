@@ -1,124 +1,89 @@
-import { Controller, Post, UploadedFiles, UseInterceptors, BadRequestException, Get, Put, Param, NotFoundException, Delete } from '@nestjs/common';
-import { FileFieldsInterceptor, FilesInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
+import {
+  Controller,
+  Post,
+  UploadedFiles,
+  UseInterceptors,
+  Get,
+  Put,
+  Param,
+  Delete,
+  Res,
+} from '@nestjs/common';
 import { PersonalDocumentsService } from '../services/personal-documents.service';
+import { Response } from 'express';
+import { PersonalDocumentsResponseDto } from '../dto/personal-document/personal-document-response.dto';
 
 @Controller('files')
 export class UploadPersonalDocumentsController {
-  constructor(private readonly personalDocumentsService: PersonalDocumentsService) {}
+  constructor(
+    private readonly personalDocumentsService: PersonalDocumentsService,
+  ) {}
 
   @Post('upload-personal-documents')
-  @UseInterceptors(
-    FilesInterceptor('files', 4, {
-      storage: diskStorage({
-        destination: './uploads/documentos-personales',
-        filename: (req, file, callback) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-          const ext = extname(file.originalname);
-          const filename = `${uniqueSuffix}${ext}`;
-          callback(null, filename);
-        },
-      }),
-      fileFilter: (req, file, callback) => {
-        if (file.mimetype === 'application/pdf') {
-          callback(null, true);
-        } else {
-          callback(new Error('Solo se permiten archivos PDF'), false);
-        }
-      },
-    }),
-  )
+  @UseInterceptors(PersonalDocumentsService.getFileUploadInterceptor())
   async uploadPersonalDocuments(@UploadedFiles() files: Express.Multer.File[]) {
-    if (!files || files.length !== 4) {
-      throw new BadRequestException('Debes subir exactamente 4 archivos');
-    }
-
-    const [pictureDoc, dniDoc, votingBallotDoc, notarizDegreeDoc] = files.map(
-      (file) => file.filename,
+    const createDto =
+      await this.personalDocumentsService.processUploadedFilesForCreate(files);
+    const documents = await this.personalDocumentsService.savePersonalDocuments(
+      createDto,
     );
-
-    await this.personalDocumentsService.savePersonalDocuments(
-      pictureDoc,
-      dniDoc,
-      votingBallotDoc,
-      notarizDegreeDoc,
-    );
-
-    return { message: 'Documentos personales subidos correctamente' };
+    return {
+      message: 'Documentos personales subidos correctamente',
+      documents: new PersonalDocumentsResponseDto(documents),
+    };
   }
 
-@Put('update-personal-documents/:id')
-@UseInterceptors(
-  FileFieldsInterceptor([
-    { name: 'pictureDoc', maxCount: 1 },
-    { name: 'dniDoc', maxCount: 1 },
-    { name: 'votingBallotDoc', maxCount: 1 },
-    { name: 'notarizDegreeDoc', maxCount: 1 },
-  ], {
-    storage: diskStorage({
-      destination: './uploads/documentos-personales',
-      filename: (req, file, callback) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-        const ext = extname(file.originalname);
-        const filename = `${uniqueSuffix}${ext}`;
-        callback(null, filename);
-      },
-    }),
-    fileFilter: (req, file, callback) => {
-      if (file.mimetype === 'application/pdf') {
-        callback(null, true);
-      } else {
-        callback(new Error('Solo se permiten archivos PDF'), false);
-      }
-    },
-  }),
-)
-async updatePersonalDocuments(
-  @Param('id') id: string,
-  @UploadedFiles() files: {
-    pictureDoc?: Express.Multer.File[];
-    dniDoc?: Express.Multer.File[];
-    votingBallotDoc?: Express.Multer.File[];
-    notarizDegreeDoc?: Express.Multer.File[];
-  },
-) {
-  const updates: Partial<{
-    pictureDoc: string;
-    dniDoc: string;
-    votingBallotDoc: string;
-    notarizDegreeDoc: string;
-  }> = {};
-
-  if (files.pictureDoc?.[0]) updates.pictureDoc = files.pictureDoc[0].filename;
-  if (files.dniDoc?.[0]) updates.dniDoc = files.dniDoc[0].filename;
-  if (files.votingBallotDoc?.[0]) updates.votingBallotDoc = files.votingBallotDoc[0].filename;
-  if (files.notarizDegreeDoc?.[0]) updates.notarizDegreeDoc = files.notarizDegreeDoc[0].filename;
-
-  if (Object.keys(updates).length === 0) {
-    throw new BadRequestException('No se proporcionaron archivos para actualizar');
+  @Put('update-personal-documents/:id')
+  @UseInterceptors(PersonalDocumentsService.getFileFieldsInterceptor())
+  async updatePersonalDocuments(
+    @Param('id') id: string,
+    @UploadedFiles() files,
+  ) {
+    const updateDto =
+      await this.personalDocumentsService.processUploadedFilesForUpdate(files);
+    const updatedDocuments =
+      await this.personalDocumentsService.updatePersonalDocuments(
+        id,
+        updateDto,
+      );
+    return {
+      message: 'Documentos personales actualizados correctamente',
+      documents: new PersonalDocumentsResponseDto(updatedDocuments),
+    };
   }
-
-  const updatedDocument = await this.personalDocumentsService.updatePersonalDocuments(id, updates);
-  return { 
-    message: 'Documentos actualizados correctamente', 
-    personalDocuments: updatedDocument 
-  };
-}
 
   @Get('list-personal-documents')
   async listPersonalDocuments() {
-    const personalDocuments = await this.personalDocumentsService.getAllPersonalDocuments();
-    return { message: 'Documentos personales obtenidos correctamente', personalDocuments };
+    const documents =
+      await this.personalDocumentsService.getAllPersonalDocuments();
+    return {
+      message: 'Documentos personales obtenidos correctamente',
+      documents: documents.map((d) => new PersonalDocumentsResponseDto(d)),
+    };
+  }
+
+  @Get('personal-documents/:id')
+  async getPersonalDocuments(@Param('id') id: string) {
+    const documents =
+      await this.personalDocumentsService.getPersonalDocumentsById(id);
+    return {
+      message: 'Documentos personales obtenidos correctamente',
+      documents: new PersonalDocumentsResponseDto(documents),
+    };
   }
 
   @Delete('delete-personal-documents/:id')
-async deletePersonalDocuments(@Param('id') id: string) {
-  const result = await this.personalDocumentsService.deletePersonalDocuments(id);
-  if (result.affected === 0) {
-    throw new NotFoundException(`Documentos personales con ID ${id} no encontrados`);
+  async deletePersonalDocuments(@Param('id') id: string) {
+    await this.personalDocumentsService.deletePersonalDocuments(id);
+    return { message: 'Documentos personales eliminados correctamente' };
   }
-  return { message: 'Documentos personales eliminados correctamente' };
-}
 
+  @Get('download/:id/:documentType')
+  async downloadDocument(
+    @Param('id') id: string,
+    @Param('documentType') documentType: string,
+    @Res() res: Response,
+  ) {
+    await this.personalDocumentsService.downloadDocument(id, documentType, res);
+  }
 }

@@ -1,187 +1,86 @@
-import { Controller, Post, UploadedFiles, UseInterceptors, BadRequestException, Get, Put, Param, NotFoundException, Delete } from '@nestjs/common';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
+import {
+  Controller,
+  Post,
+  UploadedFiles,
+  UseInterceptors,
+  Get,
+  Put,
+  Param,
+  Delete,
+  Res,
+} from '@nestjs/common';
 import { InscriptionFormService } from '../services/inscription-form.service';
+import { Response } from 'express';
+import { InscriptionResponseDto } from '../dto/inscription-document/inscription-response.dto';
 
 @Controller('files')
 export class UploadInscriptionFormController {
-  constructor(private readonly inscriptionFormService: InscriptionFormService) {}
+  constructor(
+    private readonly inscriptionFormService: InscriptionFormService,
+  ) {}
 
   @Post('upload-inscription-form')
-  @UseInterceptors(
-    FileFieldsInterceptor(
-      [
-        { name: 'registration_doc', maxCount: 1 },
-        { name: 'semester_grade_chart_doc', maxCount: 1 },
-        { name: 're_entry_doc', maxCount: 1 },
-        { name: 'english_certificate_doc', maxCount: 1 },
-        { name: 'enrollment_certificate_doc', maxCount: 1 },
-        { name: 'approval_doc', maxCount: 1 },
-      ],
-      {
-        storage: diskStorage({
-          destination: './uploads/documentos-inscripcion',
-          filename: (req, file, callback) => {
-            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-            const ext = extname(file.originalname);
-            const filename = `${uniqueSuffix}${ext}`;
-            callback(null, filename);
-          },
-        }),
-        fileFilter: (req, file, callback) => {
-          if (file.mimetype === 'application/pdf') {
-            callback(null, true);
-          } else {
-            callback(new Error('Solo se permiten archivos PDF'), false);
-          }
-        },
-      },
-    ),
-  )
-  async uploadInscriptionForm(
-    @UploadedFiles()
-    files: {
-      registration_doc?: Express.Multer.File[];
-      semester_grade_chart_doc?: Express.Multer.File[];
-      re_entry_doc?: Express.Multer.File[];
-      english_certificate_doc?: Express.Multer.File[];
-      enrollment_certificate_doc?: Express.Multer.File[];
-      approval_doc?: Express.Multer.File[];
-    },
-  ) {
-    if (!files) {
-      throw new BadRequestException('No se han proporcionado archivos');
-    }
-  
-    if (
-      !files.registration_doc ||
-      !files.semester_grade_chart_doc ||
-      !files.re_entry_doc ||
-      !files.english_certificate_doc ||
-      !files.enrollment_certificate_doc ||
-      !files.approval_doc
-    ) {
-      throw new BadRequestException('Debes subir todos los archivos requeridos');
-    }
-  
-    try {
-      const registrationDoc = files.registration_doc[0].filename;
-      const semesterGradeChartDoc = files.semester_grade_chart_doc[0].filename;
-      const reEntryDoc = files.re_entry_doc[0].filename;
-      const englishCertificateDoc = files.english_certificate_doc[0].filename;
-      const enrollmentCertificateDoc = files.enrollment_certificate_doc[0].filename;
-      const approvalDoc = files.approval_doc[0].filename;
-  
-      await this.inscriptionFormService.saveInscriptionForm(
-        registrationDoc,
-        semesterGradeChartDoc,
-        reEntryDoc,
-        englishCertificateDoc,
-        enrollmentCertificateDoc,
-        approvalDoc
-      );
-  
-      return { message: 'Formulario de inscripción subido correctamente' };
-    } catch (error) {
-      throw new BadRequestException(error.message);
-    }
+  @UseInterceptors(InscriptionFormService.getFileUploadInterceptor())
+  async uploadInscriptionForm(@UploadedFiles() files) {
+    const createInscriptionDto =
+      await this.inscriptionFormService.processUploadedFilesForCreate(files);
+    const inscription = await this.inscriptionFormService.saveInscriptionForm(
+      createInscriptionDto,
+    );
+    return {
+      message: 'Formulario de inscripción subido correctamente',
+      inscription: new InscriptionResponseDto(inscription),
+    };
   }
 
   @Put('update-inscription-form/:id')
-  @UseInterceptors(
-    FileFieldsInterceptor(
-      [
-        { name: 'registration_doc', maxCount: 1 },
-        { name: 'semester_grade_chart_doc', maxCount: 1 },
-        { name: 're_entry_doc', maxCount: 1 },
-        { name: 'english_certificate_doc', maxCount: 1 },
-        { name: 'enrollment_certificate_doc', maxCount: 1 },
-        { name: 'approval_doc', maxCount: 1 },
-      ],
-      {
-        storage: diskStorage({
-          destination: './uploads/documentos-inscripcion',
-          filename: (req, file, callback) => {
-            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-            const ext = extname(file.originalname);
-            const filename = `${uniqueSuffix}${ext}`;
-            callback(null, filename);
-          },
-        }),
-        fileFilter: (req, file, callback) => {
-          if (file.mimetype === 'application/pdf') {
-            callback(null, true);
-          } else {
-            callback(new Error('Solo se permiten archivos PDF'), false);
-          }
-        },
-      },
-    ),
-  )
-  async updateInscriptionForm(
-    @Param('id') id: string,
-    @UploadedFiles()
-    files: {
-      registration_doc?: Express.Multer.File[];
-      semester_grade_chart_doc?: Express.Multer.File[];
-      re_entry_doc?: Express.Multer.File[];
-      english_certificate_doc?: Express.Multer.File[];
-      enrollment_certificate_doc?: Express.Multer.File[];
-      approval_doc?: Express.Multer.File[];
-    },
-  ) {
-    if (!files) {
-      throw new BadRequestException('No se han proporcionado archivos');
-    }
-
-    if (
-      !files.registration_doc &&
-      !files.semester_grade_chart_doc &&
-      !files.re_entry_doc &&
-      !files.english_certificate_doc &&
-      !files.enrollment_certificate_doc &&
-      !files.approval_doc
-    ) {
-      throw new BadRequestException('Debes subir al menos un archivo');
-    }
-
-    const updatedFiles = {
-      registrationDoc: files.registration_doc ? files.registration_doc[0].filename : undefined,
-      semesterGradeChartDoc: files.semester_grade_chart_doc ? files.semester_grade_chart_doc[0].filename : undefined,
-      reEntryDoc: files.re_entry_doc ? files.re_entry_doc[0].filename : undefined,
-      englishCertificateDoc: files.english_certificate_doc ? files.english_certificate_doc[0].filename : undefined,
-      enrollmentCertificateDoc: files.enrollment_certificate_doc ? files.enrollment_certificate_doc[0].filename : undefined,
-      approvalDoc: files.approval_doc ? files.approval_doc[0].filename : undefined,
+  @UseInterceptors(InscriptionFormService.getFileUploadInterceptor())
+  async updateInscriptionForm(@Param('id') id: string, @UploadedFiles() files) {
+    const updateInscriptionDto =
+      await this.inscriptionFormService.processUploadedFilesForUpdate(files);
+    const updatedInscription =
+      await this.inscriptionFormService.updateInscriptionForm(
+        id,
+        updateInscriptionDto,
+      );
+    return {
+      message: 'Formulario de inscripción actualizado correctamente',
+      inscription: new InscriptionResponseDto(updatedInscription),
     };
-
-    const updatedInscriptionForm = await this.inscriptionFormService.updateInscriptionForm(id, updatedFiles);
-    return { message: 'Formulario de inscripción actualizado correctamente', inscriptionForm: updatedInscriptionForm };
   }
 
   @Get('list-inscription-forms')
   async listInscriptionForms() {
-    const inscriptionForms = await this.inscriptionFormService.getAllInscriptionForms();
-    return { message: 'Formularios de inscripción obtenidos correctamente', inscriptionForms };
+    const inscriptions =
+      await this.inscriptionFormService.getAllInscriptionForms();
+    return {
+      message: 'Formularios de inscripción obtenidos correctamente',
+      inscriptions: inscriptions.map((i) => new InscriptionResponseDto(i)),
+    };
   }
-  
-  @Delete('delete-inscription-form/:id')
-async deleteInscriptionForm(@Param('id') id: string) {
-  try {
-    const deletedInscriptionForm = await this.inscriptionFormService.deleteInscriptionForm(id);
-    
-    if (!deletedInscriptionForm) {
-      throw new NotFoundException(`Formulario de inscripción con ID ${id} no encontrado`);
-    }
 
-    return { 
-      message: 'Formulario de inscripción eliminado correctamente',
-      inscriptionForm: deletedInscriptionForm
-    };  } catch (error) {
-    if (error instanceof NotFoundException) {
-      throw error;
-    }
-    throw new BadRequestException('Error al eliminar el formulario de inscripción');
+  @Get('inscription-form/:id')
+  async getInscriptionForm(@Param('id') id: string) {
+    const inscription =
+      await this.inscriptionFormService.getInscriptionFormById(id);
+    return {
+      message: 'Formulario de inscripción obtenido correctamente',
+      inscription: new InscriptionResponseDto(inscription),
+    };
   }
-}
+
+  @Delete('delete-inscription-form/:id')
+  async deleteInscriptionForm(@Param('id') id: string) {
+    await this.inscriptionFormService.deleteInscriptionForm(id);
+    return { message: 'Formulario de inscripción eliminado correctamente' };
+  }
+
+  @Get('download/:id/:documentType')
+  async downloadDocument(
+    @Param('id') id: string,
+    @Param('documentType') documentType: string,
+    @Res() res: Response,
+  ) {
+    await this.inscriptionFormService.downloadDocument(id, documentType, res);
+  }
 }
