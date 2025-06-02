@@ -29,7 +29,7 @@ export class UploadInscriptionFormController {
     );
     return {
       message: 'Formulario de inscripción subido correctamente',
-      inscription: new InscriptionResponseDto(inscription),
+      inscriptionForms: new InscriptionResponseDto(inscription),
     };
   }
 
@@ -45,7 +45,7 @@ export class UploadInscriptionFormController {
       );
     return {
       message: 'Formulario de inscripción actualizado correctamente',
-      inscription: new InscriptionResponseDto(updatedInscription),
+      inscriptionForms: new InscriptionResponseDto(updatedInscription),
     };
   }
 
@@ -55,7 +55,7 @@ export class UploadInscriptionFormController {
       await this.inscriptionFormService.getAllInscriptionForms();
     return {
       message: 'Formularios de inscripción obtenidos correctamente',
-      inscriptions: inscriptions.map((i) => new InscriptionResponseDto(i)),
+      inscriptionForms: inscriptions.map((i) => new InscriptionResponseDto(i)),
     };
   }
 
@@ -65,7 +65,7 @@ export class UploadInscriptionFormController {
       await this.inscriptionFormService.getInscriptionFormById(id);
     return {
       message: 'Formulario de inscripción obtenido correctamente',
-      inscription: new InscriptionResponseDto(inscription),
+      inscriptionForms: new InscriptionResponseDto(inscription),
     };
   }
 

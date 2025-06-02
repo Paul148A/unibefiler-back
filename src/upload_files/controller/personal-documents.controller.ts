@@ -29,7 +29,7 @@ export class UploadPersonalDocumentsController {
     );
     return {
       message: 'Documentos personales subidos correctamente',
-      documents: new PersonalDocumentsResponseDto(documents),
+      personalDocuments: new PersonalDocumentsResponseDto(documents),
     };
   }
 
@@ -48,7 +48,7 @@ export class UploadPersonalDocumentsController {
       );
     return {
       message: 'Documentos personales actualizados correctamente',
-      documents: new PersonalDocumentsResponseDto(updatedDocuments),
+      personalDocuments: new PersonalDocumentsResponseDto(updatedDocuments),
     };
   }
 
@@ -58,7 +58,7 @@ export class UploadPersonalDocumentsController {
       await this.personalDocumentsService.getAllPersonalDocuments();
     return {
       message: 'Documentos personales obtenidos correctamente',
-      documents: documents.map((d) => new PersonalDocumentsResponseDto(d)),
+      personalDocuments: documents.map((d) => new PersonalDocumentsResponseDto(d)),
     };
   }
 
@@ -68,7 +68,7 @@ export class UploadPersonalDocumentsController {
       await this.personalDocumentsService.getPersonalDocumentsById(id);
     return {
       message: 'Documentos personales obtenidos correctamente',
-      documents: new PersonalDocumentsResponseDto(documents),
+      personalDocuments: new PersonalDocumentsResponseDto(documents),
     };
   }
 
