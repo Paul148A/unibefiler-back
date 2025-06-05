@@ -1,10 +1,10 @@
 import {
-  BadRequestException,
   Inject,
   Injectable,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
-import { DeleteResult, Repository } from 'typeorm';
+import { Repository, DeleteResult } from 'typeorm';
 import { DegreeDocumentsEntity } from '../entities/degree-documents.entity';
 import { UploadFilesRepositoryEnum } from '../enums/upload-files-repository.enum';
 import { Response } from 'express';
@@ -16,12 +16,15 @@ import { extname } from 'path';
 import { CreateDegreeDto } from '../dto/degree-document/create-degree.dto';
 import { DegreeResponseDto } from '../dto/degree-document/degree-response.dto';
 import { UpdateDegreeDto } from '../dto/degree-document/update-degree.dto';
+import { RecordEntity } from '../entities/record.entity';
 
 @Injectable()
 export class DegreeService {
   constructor(
     @Inject(UploadFilesRepositoryEnum.DEGREE_DOCUMENTS_REPOSITORY)
     private readonly degreeRepository: Repository<DegreeDocumentsEntity>,
+    @Inject(UploadFilesRepositoryEnum.RECORD_REPOSITORY)
+    private readonly recordRepository: Repository<RecordEntity>,
   ) {}
 
   static getFileUploadInterceptor() {
@@ -40,8 +43,7 @@ export class DegreeService {
         storage: diskStorage({
           destination: './uploads/documentos-grado',
           filename: (req, file, callback) => {
-            const uniqueSuffix =
-              Date.now() + '-' + Math.round(Math.random() * 1e9);
+            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
             const ext = extname(file.originalname);
             const filename = `${uniqueSuffix}${ext}`;
             callback(null, filename);
@@ -58,16 +60,19 @@ export class DegreeService {
     );
   }
 
-  async processUploadedFiles(files: {
-    topic_complain_doc?: Express.Multer.File[];
-    topic_approval_doc?: Express.Multer.File[];
-    tutor_assignment_doc?: Express.Multer.File[];
-    tutor_format_doc?: Express.Multer.File[];
-    antiplagiarism_doc?: Express.Multer.File[];
-    tutor_letter?: Express.Multer.File[];
-    elective_grade?: Express.Multer.File[];
-    academic_clearance?: Express.Multer.File[];
-  }): Promise<CreateDegreeDto> {
+  async processUploadedFiles(
+    files: {
+      topic_complain_doc?: Express.Multer.File[];
+      topic_approval_doc?: Express.Multer.File[];
+      tutor_assignment_doc?: Express.Multer.File[];
+      tutor_format_doc?: Express.Multer.File[];
+      antiplagiarism_doc?: Express.Multer.File[];
+      tutor_letter?: Express.Multer.File[];
+      elective_grade?: Express.Multer.File[];
+      academic_clearance?: Express.Multer.File[];
+    },
+    record_id: string,
+  ): Promise<CreateDegreeDto> {
     if (
       !files.topic_complain_doc ||
       !files.topic_approval_doc ||
@@ -78,12 +83,19 @@ export class DegreeService {
       !files.elective_grade ||
       !files.academic_clearance
     ) {
-      throw new BadRequestException(
-        'Debes subir todos los archivos requeridos',
-      );
+      throw new BadRequestException('Debes subir todos los archivos requeridos');
+    }
+
+    const record = await this.recordRepository.findOne({
+      where: { id: record_id },
+    });
+
+    if (!record) {
+      throw new NotFoundException(`Record con ID ${record_id} no encontrado`);
     }
 
     return {
+      record_id,
       topicComplainDoc: files.topic_complain_doc[0].filename,
       topicApprovalDoc: files.topic_approval_doc[0].filename,
       tutorAssignmentDoc: files.tutor_assignment_doc[0].filename,
@@ -98,14 +110,21 @@ export class DegreeService {
   async saveDegree(
     createDegreeDto: CreateDegreeDto,
   ): Promise<DegreeResponseDto> {
-    const degree = this.degreeRepository.create(createDegreeDto);
+    const record = await this.recordRepository.findOne({
+      where: { id: createDegreeDto.record_id },
+    });
+
+    if (!record) {
+      throw new NotFoundException(`Record con ID ${createDegreeDto.record_id} no encontrado`);
+    }
+
+    const degree = this.degreeRepository.create({
+      ...createDegreeDto,
+      record: record,
+    });
+    
     const savedDegree = await this.degreeRepository.save(degree);
     return new DegreeResponseDto(savedDegree);
-  }
-
-  async getAllDegrees(): Promise<DegreeResponseDto[]> {
-    const degrees = await this.degreeRepository.find();
-    return degrees.map((degree) => new DegreeResponseDto(degree));
   }
 
   async updateDegree(
@@ -188,5 +207,10 @@ export class DegreeService {
     }
 
     return mapping[documentType];
+  }
+
+    async getAllDegrees(): Promise<DegreeResponseDto[]> {
+    const degrees = await this.degreeRepository.find();
+    return degrees.map((degree) => new DegreeResponseDto(degree));
   }
 }

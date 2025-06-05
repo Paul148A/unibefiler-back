@@ -69,10 +69,10 @@ export class UsersService {
         };
     }
 
-    async findOne(id: string): Promise<FilterUserDto> {
+    async findOne(id: string): Promise<UserEntity> {
         const user = await this.repository.findOne({
             where: { id },
-            relations: { role: true, status: true },
+            relations: { role: true, status: true, record: true },
             select: { password: false },
         });
 
@@ -80,11 +80,7 @@ export class UsersService {
             throw new NotFoundException('El usuario con el id: ' + id + ' no existe');
         }
 
-        const userDto = plainToInstance(FilterUserDto, user, {
-            excludeExtraneousValues: true
-        });
-
-        return userDto;
+        return user;
     }
 
     async findByIdentification(identification: string): Promise<FilterUserDto> {

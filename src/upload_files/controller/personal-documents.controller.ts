@@ -8,25 +8,36 @@ import {
   Param,
   Delete,
   Res,
+  Body,
+  BadRequestException,
+  UseGuards,
+  Request,
+  NotFoundException,
 } from '@nestjs/common';
 import { PersonalDocumentsService } from '../services/personal-documents.service';
 import { Response } from 'express';
 import { PersonalDocumentsResponseDto } from '../dto/personal-document/personal-document-response.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { UsersService } from 'src/auth/services/user.service';
 
 @Controller('files')
 export class UploadPersonalDocumentsController {
   constructor(
     private readonly personalDocumentsService: PersonalDocumentsService,
+    private readonly usersService: UsersService,
   ) {}
 
   @Post('upload-personal-documents')
+  @UseGuards(AuthGuard('jwt-cookie'))
   @UseInterceptors(PersonalDocumentsService.getFileUploadInterceptor())
-  async uploadPersonalDocuments(@UploadedFiles() files: Express.Multer.File[]) {
-    const createDto =
-      await this.personalDocumentsService.processUploadedFilesForCreate(files);
-    const documents = await this.personalDocumentsService.savePersonalDocuments(
-      createDto,
-    );
+  async uploadPersonalDocuments(@UploadedFiles() files: Express.Multer.File[], @Request() req,) {
+    const userId = req.user.sub;
+    const user = await this.usersService.findOne(userId);
+    if (!user.record) {
+      throw new NotFoundException('El usuario no tiene un record asociado');
+    }
+    const createDto = await this.personalDocumentsService.processUploadedFilesForCreate(files, user.record.id);
+    const documents = await this.personalDocumentsService.savePersonalDocuments(createDto);
     return {
       message: 'Documentos personales subidos correctamente',
       personalDocuments: new PersonalDocumentsResponseDto(documents),

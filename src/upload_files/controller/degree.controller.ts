@@ -8,20 +8,34 @@ import {
   Param,
   Delete,
   Res,
+  Body,
+  BadRequestException,
+  UseGuards,
+  Request,
+  NotFoundException,
 } from '@nestjs/common';
 import { DegreeService } from '../services/degree.service';
 import { Response } from 'express';
+import { AuthGuard } from '@nestjs/passport';
+import { UsersService } from 'src/auth/services/user.service';
 
 @Controller('files')
 export class UploadDegreeController {
-  constructor(private readonly degreeService: DegreeService) {}
+  constructor(
+    private readonly degreeService: DegreeService,
+    private readonly usersService: UsersService,
+  ) {}
 
   @Post('upload-degree')
+  @UseGuards(AuthGuard('jwt-cookie'))
   @UseInterceptors(DegreeService.getFileUploadInterceptor())
-  async uploadDegree(@UploadedFiles() files) {
-    const createDegreeDto = await this.degreeService.processUploadedFiles(
-      files,
-    );
+  async uploadDegree(@UploadedFiles() files, @Request() req) {
+    const userId = req.user.sub;
+    const user = await this.usersService.findOne(userId);
+    if (!user.record) {
+      throw new NotFoundException('El usuario no tiene un record asociado');
+    }
+    const createDegreeDto = await this.degreeService.processUploadedFiles(files, user.record.id);
     await this.degreeService.saveDegree(createDegreeDto);
     return { message: 'Documentos de grado subidos correctamente' };
   }
@@ -31,6 +45,7 @@ export class UploadDegreeController {
   async updateDegree(@Param('id') id: string, @UploadedFiles() files) {
     const updateDegreeDto = await this.degreeService.processUploadedFiles(
       files,
+      id
     );
     await this.degreeService.updateDegree(id, updateDegreeDto);
     return { message: 'Documentos de grado actualizados correctamente' };
