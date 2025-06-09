@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
 import { GradeEnrollmentEntity } from './grade-enrollment.entity';
-import { EnrollmentDocEntity } from './enrollment-doc.entity';
+import { EnrollmentDocEntity } from './enrollment-documents.entity';
 import { RecordEntity } from './record.entity';
 
 @Entity('inscription_documents', { schema: 'upload_files' })
@@ -31,6 +31,7 @@ export class InscriptionDocumentsEntity {
     type: 'varchar',
     name: 'semester_grade_chart_doc',
     comment: 'Documento con las notas del semestre',
+    nullable: true,
   })
   semesterGradeChartDoc: string;
 
@@ -38,6 +39,7 @@ export class InscriptionDocumentsEntity {
     type: 'varchar',
     name: 're_entry_doc',
     comment: 'Documento de reingreso (en caso de ser necesario)',
+    nullable: true,
   })
   reEntryDoc: string;
 
@@ -45,6 +47,7 @@ export class InscriptionDocumentsEntity {
     type: 'varchar',
     name: 'englishCertificateDoc',
     comment: 'Documento de aprobacion del ingles',
+    nullable: true,
   })
   englishCertificateDoc: string;
   
@@ -52,6 +55,7 @@ export class InscriptionDocumentsEntity {
     type: 'varchar',
     name: 'enrollment_certificate_doc',
     comment: 'Documento con el certificado de las notas',
+    nullable: true,
   })
   enrollmentCertificateDoc: string;
 
@@ -59,6 +63,7 @@ export class InscriptionDocumentsEntity {
     type: 'varchar',
     name: 'approval_doc',
     comment: 'Documento de aprobacion',
+    nullable: true,
   })
   approvalDoc: string;
 

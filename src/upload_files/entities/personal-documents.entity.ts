@@ -17,6 +17,7 @@ export class PersonalDocumentsEntity {
     type: 'varchar',
     name: 'picture_doc',
     comment: 'Foto del estudiante tamaño carnet',
+    nullable: true,
    })
   pictureDoc: string;
 
@@ -24,6 +25,7 @@ export class PersonalDocumentsEntity {
     type: 'varchar',
     name: 'dni_doc',
     comment: 'Foto del documento de identidad',
+    nullable: true,
   })
   dniDoc: string;
 
@@ -31,6 +33,7 @@ export class PersonalDocumentsEntity {
     type: 'varchar',
     name: 'voting_ballot_doc',
     comment: 'Foto del documento de la papeleta de votacion',
+    nullable: true,
   })
   votingBallotDoc: string;
 
@@ -38,6 +41,7 @@ export class PersonalDocumentsEntity {
     type: 'varchar',
     name: 'notariz_degree_doc',
     comment: 'Foto del documento del titulo notariado',
+    nullable: true,
   })
   notarizDegreeDoc: string;
 }

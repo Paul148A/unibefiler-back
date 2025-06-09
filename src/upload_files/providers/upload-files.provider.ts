@@ -5,7 +5,7 @@ import { PersonalDocumentsEntity } from '../entities/personal-documents.entity';
 import { InscriptionDocumentsEntity } from '../entities/inscription-documents.entity';
 import { DegreeDocumentsEntity } from '../entities/degree-documents.entity';
 import { GradeEnrollmentEntity } from '../entities/grade-enrollment.entity';
-import { EnrollmentDocEntity } from '../entities/enrollment-doc.entity';
+import { EnrollmentDocEntity } from '../entities/enrollment-documents.entity';
 
 export const uploadFilesProviders = [
     {

@@ -1,3 +1,4 @@
+import { getDegreeDocumentsByRecordId } from '../../../../unibe-filer-front/src/services/upload-files/degree-documents.service';
 import {
   Controller,
   Post,
@@ -12,8 +13,8 @@ import {
 import { DegreeService } from '../services/degree.service';
 import { Response } from 'express';
 
-@Controller('files')
-export class UploadDegreeController {
+@Controller('api1/degree')
+export class DegreeController {
   constructor(private readonly degreeService: DegreeService) {}
 
   @Post('upload-degree')
@@ -61,5 +62,14 @@ export class UploadDegreeController {
     @Res() res: Response,
   ) {
     await this.degreeService.downloadDocument(id, documentType, res);
+  }
+
+  @Get('degree-docs/:id')
+  async getDegreeDocumentsByRecordId(@Param('id') id: string) {
+    const documents = await getDegreeDocumentsByRecordId(id);
+    return {
+      message: 'Documentos de grado obtenidos correctamente',
+      documents,
+    };
   }
 }

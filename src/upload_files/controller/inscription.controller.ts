@@ -13,8 +13,8 @@ import { InscriptionFormService } from '../services/inscription-form.service';
 import { Response } from 'express';
 import { InscriptionResponseDto } from '../dto/inscription-document/inscription-response.dto';
 
-@Controller('files')
-export class UploadInscriptionFormController {
+@Controller('api1/inscription')
+export class InscriptionController {
   constructor(
     private readonly inscriptionFormService: InscriptionFormService,
   ) {}

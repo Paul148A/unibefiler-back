@@ -13,8 +13,8 @@ import { PersonalDocumentsService } from '../services/personal-documents.service
 import { Response } from 'express';
 import { PersonalDocumentsResponseDto } from '../dto/personal-document/personal-document-response.dto';
 
-@Controller('files')
-export class UploadPersonalDocumentsController {
+@Controller('api1/personal')
+export class PersonalController {
   constructor(
     private readonly personalDocumentsService: PersonalDocumentsService,
   ) {}

@@ -2,9 +2,9 @@ import { Module, Global } from '@nestjs/common';
 import { PersonalDocumentsService } from './services/personal-documents.service';
 import { InscriptionFormService } from './services/inscription-form.service';
 import { DegreeService } from './services/degree.service';
-import { UploadPersonalDocumentsController } from './controller/personal-documents.controller';
-import { UploadInscriptionFormController } from './controller/inscription-form.controller';
-import { UploadDegreeController } from './controller/degree.controller';
+import { PersonalController } from './controller/personal.controller';
+import { InscriptionController } from './controller/inscription.controller';
+import { DegreeController } from './controller/degree.controller';
 import { RecordService } from './services/record.service';
 import { RecordController } from './controller/record.controller';
 import { uploadFilesProviders } from './providers/upload-files.provider';
@@ -16,9 +16,9 @@ import { DatabaseModule } from 'src/database/database.module';
     DatabaseModule,
   ],
   controllers: [
-    UploadPersonalDocumentsController,
-    UploadInscriptionFormController,
-    UploadDegreeController,
+    PersonalController,
+    InscriptionController,
+    DegreeController,
     RecordController
 
   ],

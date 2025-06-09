@@ -6,9 +6,6 @@ import { UpdateUserDto } from "../dto/user/update-user.dto";
 import { UserEntity } from "../entities";
 import { UsersService } from "../services/user.service";
 import { ResponseHttpModel } from "../models/response-http.model";
-import { AuthGuard } from "@nestjs/passport";
-import { Roles } from "../custom-role-guard/roles.decorator";
-import { RolesGuard } from "../custom-role-guard/roles.guard";
 
 @ApiTags('Users')
 @Controller('api1/users')
