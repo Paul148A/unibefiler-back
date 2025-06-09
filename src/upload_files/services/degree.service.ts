@@ -209,8 +209,14 @@ export class DegreeService {
     return mapping[documentType];
   }
 
-    async getAllDegrees(): Promise<DegreeResponseDto[]> {
-    const degrees = await this.degreeRepository.find();
-    return degrees.map((degree) => new DegreeResponseDto(degree));
+  async getDegreeDocumentsByRecordId(recordId: string): Promise<DegreeDocumentsEntity[]> {
+    return this.degreeRepository.find({
+      where: { record: { id: recordId } },
+      relations: ['record']
+    });
+  }
+
+  async getAllDegrees(): Promise<DegreeDocumentsEntity[]> {
+    return this.degreeRepository.find();
   }
 }

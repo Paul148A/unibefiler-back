@@ -242,4 +242,11 @@ export class PersonalService {
 
     return mapping[documentType];
   }
+
+  async getPersonalDocumentsByRecordId(recordId: string): Promise<PersonalDocumentsEntity[]> {
+    return this.personalDocumentsRepository.find({
+      where: { record: { id: recordId } },
+      relations: ['record']
+    });
+  }
 }

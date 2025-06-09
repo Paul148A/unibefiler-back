@@ -64,9 +64,14 @@ export class PersonalController {
   }
 
   @Get('list-personal-documents')
-  async listPersonalDocuments() {
-    const documents =
-      await this.personalDocumentsService.getAllPersonalDocuments();
+  @UseGuards(AuthGuard('jwt-cookie'))
+  async listPersonalDocuments(@Request() req) {
+    const userId = req.user.sub;
+    const user = await this.usersService.findOne(userId);
+    if (!user.record) {
+      throw new NotFoundException('El usuario no tiene un record asociado');
+    }
+    const documents = await this.personalDocumentsService.getPersonalDocumentsByRecordId(user.record.id);
     return {
       message: 'Documentos personales obtenidos correctamente',
       personalDocuments: documents.map((d) => new PersonalDocumentsResponseDto(d)),

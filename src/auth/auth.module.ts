@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { Global, Module } from "@nestjs/common";
+import { Global, Module, forwardRef } from "@nestjs/common";
 import { DatabaseModule } from "src/database/database.module";
 import { AuthController } from "./controllers/auth.controller";
 import { UsersController } from "./controllers/user.controller";
@@ -22,7 +22,7 @@ import { StatusController } from "./controllers/status.controller";
 @Module({
     imports: [
         DatabaseModule,
-        FilesModule,
+        forwardRef(() => FilesModule),
         PassportModule.register({ defaultStrategy: 'jwt-cookie' }),
         JwtModule.register({
             secret: 'UnibeFilerSecretKey@*',

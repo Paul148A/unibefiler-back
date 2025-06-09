@@ -1,4 +1,4 @@
-import { Module, Global } from '@nestjs/common';
+import { Module, Global, forwardRef } from '@nestjs/common';
 import { PersonalService } from './services/personal.service';
 import { InscriptionService } from './services/inscription.service';
 import { DegreeService } from './services/degree.service';
@@ -9,18 +9,19 @@ import { RecordService } from './services/record.service';
 import { RecordController } from './controller/record.controller';
 import { uploadFilesProviders } from './providers/upload-files.provider';
 import { DatabaseModule } from 'src/database/database.module';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Global()
 @Module({
   imports: [
     DatabaseModule,
+    forwardRef(() => AuthModule)
   ],
   controllers: [
     PersonalController,
     InscriptionController,
     DegreeController,
     RecordController
-
   ],
   providers: [
     ...uploadFilesProviders,
