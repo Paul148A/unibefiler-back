@@ -8,28 +8,39 @@ import {
   Param,
   Delete,
   Res,
+  Body,
+  BadRequestException,
+  UseGuards,
+  Request,
+  NotFoundException,
 } from '@nestjs/common';
 import { PersonalDocumentsService } from '../services/personal-documents.service';
 import { Response } from 'express';
 import { PersonalDocumentsResponseDto } from '../dto/personal-document/personal-document-response.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { UsersService } from 'src/auth/services/user.service';
 
 @Controller('api1/personal')
 export class PersonalController {
   constructor(
     private readonly personalDocumentsService: PersonalDocumentsService,
+    private readonly usersService: UsersService,
   ) {}
 
   @Post('upload-personal-documents')
+  @UseGuards(AuthGuard('jwt-cookie'))
   @UseInterceptors(PersonalDocumentsService.getFileUploadInterceptor())
-  async uploadPersonalDocuments(@UploadedFiles() files: Express.Multer.File[]) {
-    const createDto =
-      await this.personalDocumentsService.processUploadedFilesForCreate(files);
-    const documents = await this.personalDocumentsService.savePersonalDocuments(
-      createDto,
-    );
+  async uploadPersonalDocuments(@UploadedFiles() files: Express.Multer.File[], @Request() req,) {
+    const userId = req.user.sub;
+    const user = await this.usersService.findOne(userId);
+    if (!user.record) {
+      throw new NotFoundException('El usuario no tiene un record asociado');
+    }
+    const createDto = await this.personalDocumentsService.processUploadedFilesForCreate(files, user.record.id);
+    const documents = await this.personalDocumentsService.savePersonalDocuments(createDto);
     return {
       message: 'Documentos personales subidos correctamente',
-      documents: new PersonalDocumentsResponseDto(documents),
+      personalDocuments: new PersonalDocumentsResponseDto(documents),
     };
   }
 
@@ -48,7 +59,7 @@ export class PersonalController {
       );
     return {
       message: 'Documentos personales actualizados correctamente',
-      documents: new PersonalDocumentsResponseDto(updatedDocuments),
+      personalDocuments: new PersonalDocumentsResponseDto(updatedDocuments),
     };
   }
 
@@ -58,7 +69,7 @@ export class PersonalController {
       await this.personalDocumentsService.getAllPersonalDocuments();
     return {
       message: 'Documentos personales obtenidos correctamente',
-      documents: documents.map((d) => new PersonalDocumentsResponseDto(d)),
+      personalDocuments: documents.map((d) => new PersonalDocumentsResponseDto(d)),
     };
   }
 
@@ -68,7 +79,7 @@ export class PersonalController {
       await this.personalDocumentsService.getPersonalDocumentsById(id);
     return {
       message: 'Documentos personales obtenidos correctamente',
-      documents: new PersonalDocumentsResponseDto(documents),
+      personalDocuments: new PersonalDocumentsResponseDto(documents),
     };
   }
 

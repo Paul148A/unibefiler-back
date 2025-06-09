@@ -18,12 +18,15 @@ import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { CreatePersonalDocumentsDto } from '../dto/personal-document/create-personal-document.dto';
 import { UpdatePersonalDocumentsDto } from '../dto/personal-document/update-personal-document.dto';
+import { RecordEntity } from '../entities/record.entity';
 
 @Injectable()
 export class PersonalDocumentsService {
   constructor(
     @Inject(UploadFilesRepositoryEnum.PERSONAL_DOCUMENTS_REPOSITORY)
     private readonly personalDocumentsRepository: Repository<PersonalDocumentsEntity>,
+    @Inject(UploadFilesRepositoryEnum.RECORD_REPOSITORY)
+    private readonly recordRepository: Repository<RecordEntity>,
   ) {}
 
   static getFileUploadInterceptor() {
@@ -78,9 +81,18 @@ export class PersonalDocumentsService {
 
   async processUploadedFilesForCreate(
     files: Express.Multer.File[],
+    record_id: string,
   ): Promise<CreatePersonalDocumentsDto> {
     if (!files || files.length !== 4) {
       throw new BadRequestException('Debes subir exactamente 4 archivos');
+    }
+
+    const record = await this.recordRepository.findOne({
+      where: { id: record_id },
+    });
+
+    if (!record) {
+      throw new NotFoundException(`Record con ID ${record_id} no encontrado`);
     }
 
     const [pictureDoc, dniDoc, votingBallotDoc, notarizDegreeDoc] = files.map(
@@ -88,6 +100,7 @@ export class PersonalDocumentsService {
     );
 
     return {
+      record_id,
       pictureDoc,
       dniDoc,
       votingBallotDoc,
@@ -123,7 +136,19 @@ export class PersonalDocumentsService {
   async savePersonalDocuments(
     createDto: CreatePersonalDocumentsDto,
   ): Promise<PersonalDocumentsEntity> {
-    const documents = this.personalDocumentsRepository.create(createDto);
+    const record = await this.recordRepository.findOne({
+      where: { id: createDto.record_id },
+    });
+
+    if (!record) {
+      throw new NotFoundException(`Record con ID ${createDto.record_id} no encontrado`);
+    }
+
+    const documents = this.personalDocumentsRepository.create({
+      ...createDto,
+      record: record,
+    });
+    
     return this.personalDocumentsRepository.save(documents);
   }
 

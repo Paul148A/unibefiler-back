@@ -1,26 +1,32 @@
 import {
-  BadRequestException,
   Inject,
   Injectable,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { Repository, DeleteResult } from 'typeorm';
 import { InscriptionDocumentsEntity } from '../entities/inscription-documents.entity';
 import { UploadFilesRepositoryEnum } from '../enums/upload-files-repository.enum';
 import { Response } from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import {
+  FileFieldsInterceptor,
+  FilesInterceptor,
+} from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { CreateInscriptionDto } from '../dto/inscription-document/create-inscription.dto';
 import { UpdateInscriptionDto } from '../dto/inscription-document/update-inscription.dto';
+import { RecordEntity } from '../entities/record.entity';
 
 @Injectable()
 export class InscriptionFormService {
   constructor(
     @Inject(UploadFilesRepositoryEnum.INSCRIPTION_DOCUMENTS_REPOSITORY)
     private readonly inscriptionFormRepository: Repository<InscriptionDocumentsEntity>,
+    @Inject(UploadFilesRepositoryEnum.RECORD_REPOSITORY)
+    private readonly recordRepository: Repository<RecordEntity>,
   ) {}
 
   static getFileUploadInterceptor() {
@@ -37,8 +43,7 @@ export class InscriptionFormService {
         storage: diskStorage({
           destination: './uploads/documentos-inscripcion',
           filename: (req, file, callback) => {
-            const uniqueSuffix =
-              Date.now() + '-' + Math.round(Math.random() * 1e9);
+            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
             const ext = extname(file.originalname);
             const filename = `${uniqueSuffix}${ext}`;
             callback(null, filename);
@@ -55,14 +60,17 @@ export class InscriptionFormService {
     );
   }
 
-  async processUploadedFilesForCreate(files: {
-    registration_doc?: Express.Multer.File[];
-    semester_grade_chart_doc?: Express.Multer.File[];
-    re_entry_doc?: Express.Multer.File[];
-    english_certificate_doc?: Express.Multer.File[];
-    enrollment_certificate_doc?: Express.Multer.File[];
-    approval_doc?: Express.Multer.File[];
-  }): Promise<CreateInscriptionDto> {
+  async processUploadedFilesForCreate(
+    files: {
+      registration_doc?: Express.Multer.File[];
+      semester_grade_chart_doc?: Express.Multer.File[];
+      re_entry_doc?: Express.Multer.File[];
+      english_certificate_doc?: Express.Multer.File[];
+      enrollment_certificate_doc?: Express.Multer.File[];
+      approval_doc?: Express.Multer.File[];
+    },
+    record_id: string,
+  ): Promise<CreateInscriptionDto> {
     if (
       !files.registration_doc ||
       !files.semester_grade_chart_doc ||
@@ -71,12 +79,19 @@ export class InscriptionFormService {
       !files.enrollment_certificate_doc ||
       !files.approval_doc
     ) {
-      throw new BadRequestException(
-        'Debes subir todos los archivos requeridos',
-      );
+      throw new BadRequestException('Debes subir todos los archivos requeridos');
+    }
+
+    const record = await this.recordRepository.findOne({
+      where: { id: record_id },
+    });
+
+    if (!record) {
+      throw new NotFoundException(`Record con ID ${record_id} no encontrado`);
     }
 
     return {
+      record_id,
       registrationDoc: files.registration_doc[0].filename,
       semesterGradeChartDoc: files.semester_grade_chart_doc[0].filename,
       reEntryDoc: files.re_entry_doc[0].filename,
@@ -94,32 +109,55 @@ export class InscriptionFormService {
     enrollment_certificate_doc?: Express.Multer.File[];
     approval_doc?: Express.Multer.File[];
   }): Promise<UpdateInscriptionDto> {
-    const updateDto: UpdateInscriptionDto = {};
+    const updates: UpdateInscriptionDto = {};
 
-    if (files.registration_doc)
-      updateDto.registrationDoc = files.registration_doc[0].filename;
-    if (files.semester_grade_chart_doc)
-      updateDto.semesterGradeChartDoc =
-        files.semester_grade_chart_doc[0].filename;
-    if (files.re_entry_doc)
-      updateDto.reEntryDoc = files.re_entry_doc[0].filename;
-    if (files.english_certificate_doc)
-      updateDto.englishCertificateDoc =
-        files.english_certificate_doc[0].filename;
-    if (files.enrollment_certificate_doc)
-      updateDto.enrollmentCertificateDoc =
-        files.enrollment_certificate_doc[0].filename;
-    if (files.approval_doc)
-      updateDto.approvalDoc = files.approval_doc[0].filename;
+    if (files.registration_doc?.[0]) updates.registrationDoc = files.registration_doc[0].filename;
+    if (files.semester_grade_chart_doc?.[0]) updates.semesterGradeChartDoc = files.semester_grade_chart_doc[0].filename;
+    if (files.re_entry_doc?.[0]) updates.reEntryDoc = files.re_entry_doc[0].filename;
+    if (files.english_certificate_doc?.[0]) updates.englishCertificateDoc = files.english_certificate_doc[0].filename;
+    if (files.enrollment_certificate_doc?.[0]) updates.enrollmentCertificateDoc = files.enrollment_certificate_doc[0].filename;
+    if (files.approval_doc?.[0]) updates.approvalDoc = files.approval_doc[0].filename;
 
-    return updateDto;
+    if (Object.keys(updates).length === 0) {
+      throw new BadRequestException('No se proporcionaron archivos para actualizar');
+    }
+
+    return updates;
   }
 
   async saveInscriptionForm(
-    createInscriptionDto: CreateInscriptionDto,
+    createDto: CreateInscriptionDto,
   ): Promise<InscriptionDocumentsEntity> {
-    const inscription =
-      this.inscriptionFormRepository.create(createInscriptionDto);
+    const record = await this.recordRepository.findOne({
+      where: { id: createDto.record_id },
+    });
+
+    if (!record) {
+      throw new NotFoundException(`Record con ID ${createDto.record_id} no encontrado`);
+    }
+
+    const inscription = this.inscriptionFormRepository.create({
+      ...createDto,
+      record: record,
+    });
+    
+    return this.inscriptionFormRepository.save(inscription);
+  }
+
+  async updateInscriptionForm(
+    id: string,
+    updateDto: UpdateInscriptionDto,
+  ): Promise<InscriptionDocumentsEntity> {
+    const inscription = await this.inscriptionFormRepository.findOne({
+      where: { id },
+    });
+    if (!inscription) {
+      throw new NotFoundException(
+        `Formulario de inscripción con ID ${id} no encontrado`,
+      );
+    }
+
+    Object.assign(inscription, updateDto);
     return this.inscriptionFormRepository.save(inscription);
   }
 
@@ -127,9 +165,7 @@ export class InscriptionFormService {
     return this.inscriptionFormRepository.find();
   }
 
-  async getInscriptionFormById(
-    id: string,
-  ): Promise<InscriptionDocumentsEntity> {
+  async getInscriptionFormById(id: string): Promise<InscriptionDocumentsEntity> {
     const inscription = await this.inscriptionFormRepository.findOne({
       where: { id },
     });
@@ -139,23 +175,6 @@ export class InscriptionFormService {
       );
     }
     return inscription;
-  }
-
-  async updateInscriptionForm(
-    id: string,
-    updateInscriptionDto: UpdateInscriptionDto,
-  ): Promise<InscriptionDocumentsEntity> {
-    const inscription = await this.inscriptionFormRepository.findOne({
-      where: { id },
-    });
-    if (!inscription) {
-      throw new NotFoundException(
-        `Formulario de inscripción con ID ${id} no encontrado`,
-      );
-    }
-
-    Object.assign(inscription, updateInscriptionDto);
-    return this.inscriptionFormRepository.save(inscription);
   }
 
   async deleteInscriptionForm(id: string): Promise<void> {
@@ -184,9 +203,7 @@ export class InscriptionFormService {
     const documentField = this.mapDocumentTypeToField(documentType);
     const filename = inscription[documentField];
     if (!filename) {
-      throw new NotFoundException(
-        `Documento ${documentType} no encontrado para este formulario`,
-      );
+      throw new NotFoundException(`Documento ${documentType} no encontrado`);
     }
 
     const filePath = path.join('./uploads/documentos-inscripcion', filename);

@@ -1,4 +1,5 @@
 export class CreateDegreeDto {
+  record_id: string;
   topicComplainDoc: string;
   topicApprovalDoc: string;
   tutorAssignmentDoc: string;

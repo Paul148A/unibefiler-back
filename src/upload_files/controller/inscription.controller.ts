@@ -8,30 +8,41 @@ import {
   Param,
   Delete,
   Res,
+  Body,
+  BadRequestException,
+  UseGuards,
+  Request,
+  NotFoundException,
 } from '@nestjs/common';
 import { InscriptionFormService } from '../services/inscription-form.service';
 import { Response } from 'express';
 import { InscriptionResponseDto } from '../dto/inscription-document/inscription-response.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { UsersService } from 'src/auth/services/user.service';
 
 @Controller('api1/inscription')
 export class InscriptionController {
   constructor(
     private readonly inscriptionFormService: InscriptionFormService,
+    private readonly usersService: UsersService,
   ) {}
 
   @Post('upload-inscription-form')
+  @UseGuards(AuthGuard('jwt-cookie'))
   @UseInterceptors(InscriptionFormService.getFileUploadInterceptor())
-  async uploadInscriptionForm(@UploadedFiles() files) {
-    const createInscriptionDto =
-      await this.inscriptionFormService.processUploadedFilesForCreate(files);
-    const inscription = await this.inscriptionFormService.saveInscriptionForm(
-      createInscriptionDto,
-    );
+  async uploadInscriptionForm(@UploadedFiles() files, @Request() req) {
+    const userId = req.user.sub;
+    const user = await this.usersService.findOne(userId);
+    if (!user.record) {
+        throw new NotFoundException('El usuario no tiene un record asociado');
+    }
+    const createInscriptionDto = await this.inscriptionFormService.processUploadedFilesForCreate(files, user.record.id);
+    const inscription = await this.inscriptionFormService.saveInscriptionForm(createInscriptionDto);
     return {
-      message: 'Formulario de inscripción subido correctamente',
-      inscription: new InscriptionResponseDto(inscription),
+        message: 'Formulario de inscripción subido correctamente',
+        inscriptionForms: new InscriptionResponseDto(inscription),
     };
-  }
+  } 
 
   @Put('update-inscription-form/:id')
   @UseInterceptors(InscriptionFormService.getFileUploadInterceptor())
@@ -45,7 +56,7 @@ export class InscriptionController {
       );
     return {
       message: 'Formulario de inscripción actualizado correctamente',
-      inscription: new InscriptionResponseDto(updatedInscription),
+      inscriptionForms: new InscriptionResponseDto(updatedInscription),
     };
   }
 
@@ -55,7 +66,7 @@ export class InscriptionController {
       await this.inscriptionFormService.getAllInscriptionForms();
     return {
       message: 'Formularios de inscripción obtenidos correctamente',
-      inscriptions: inscriptions.map((i) => new InscriptionResponseDto(i)),
+      inscriptionForms: inscriptions.map((i) => new InscriptionResponseDto(i)),
     };
   }
 
@@ -65,7 +76,7 @@ export class InscriptionController {
       await this.inscriptionFormService.getInscriptionFormById(id);
     return {
       message: 'Formulario de inscripción obtenido correctamente',
-      inscription: new InscriptionResponseDto(inscription),
+      inscriptionForms: new InscriptionResponseDto(inscription),
     };
   }
 
