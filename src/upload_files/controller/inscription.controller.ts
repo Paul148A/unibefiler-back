@@ -14,7 +14,7 @@ import {
   Request,
   NotFoundException,
 } from '@nestjs/common';
-import { InscriptionFormService } from '../services/inscription-form.service';
+import { InscriptionService } from '../services/inscription.service';
 import { Response } from 'express';
 import { InscriptionResponseDto } from '../dto/inscription-document/inscription-response.dto';
 import { AuthGuard } from '@nestjs/passport';
@@ -23,21 +23,21 @@ import { UsersService } from 'src/auth/services/user.service';
 @Controller('api1/inscription')
 export class InscriptionController {
   constructor(
-    private readonly inscriptionFormService: InscriptionFormService,
+    private readonly inscriptionService: InscriptionService,
     private readonly usersService: UsersService,
   ) {}
 
   @Post('upload-inscription-form')
   @UseGuards(AuthGuard('jwt-cookie'))
-  @UseInterceptors(InscriptionFormService.getFileUploadInterceptor())
+  @UseInterceptors(InscriptionService.getFileUploadInterceptor())
   async uploadInscriptionForm(@UploadedFiles() files, @Request() req) {
     const userId = req.user.sub;
     const user = await this.usersService.findOne(userId);
     if (!user.record) {
         throw new NotFoundException('El usuario no tiene un record asociado');
     }
-    const createInscriptionDto = await this.inscriptionFormService.processUploadedFilesForCreate(files, user.record.id);
-    const inscription = await this.inscriptionFormService.saveInscriptionForm(createInscriptionDto);
+    const createInscriptionDto = await this.inscriptionService.processUploadedFilesForCreate(files, user.record.id);
+    const inscription = await this.inscriptionService.saveInscriptionForm(createInscriptionDto);
     return {
         message: 'Formulario de inscripción subido correctamente',
         inscriptionForms: new InscriptionResponseDto(inscription),
@@ -45,12 +45,12 @@ export class InscriptionController {
   } 
 
   @Put('update-inscription-form/:id')
-  @UseInterceptors(InscriptionFormService.getFileUploadInterceptor())
+  @UseInterceptors(InscriptionService.getFileUploadInterceptor())
   async updateInscriptionForm(@Param('id') id: string, @UploadedFiles() files) {
     const updateInscriptionDto =
-      await this.inscriptionFormService.processUploadedFilesForUpdate(files);
+      await this.inscriptionService.processUploadedFilesForUpdate(files);
     const updatedInscription =
-      await this.inscriptionFormService.updateInscriptionForm(
+      await this.inscriptionService.updateInscriptionForm(
         id,
         updateInscriptionDto,
       );
@@ -63,7 +63,7 @@ export class InscriptionController {
   @Get('list-inscription-forms')
   async listInscriptionForms() {
     const inscriptions =
-      await this.inscriptionFormService.getAllInscriptionForms();
+      await this.inscriptionService.getAllInscriptionForms();
     return {
       message: 'Formularios de inscripción obtenidos correctamente',
       inscriptionForms: inscriptions.map((i) => new InscriptionResponseDto(i)),
@@ -73,7 +73,7 @@ export class InscriptionController {
   @Get('inscription-form/:id')
   async getInscriptionForm(@Param('id') id: string) {
     const inscription =
-      await this.inscriptionFormService.getInscriptionFormById(id);
+      await this.inscriptionService.getInscriptionFormById(id);
     return {
       message: 'Formulario de inscripción obtenido correctamente',
       inscriptionForms: new InscriptionResponseDto(inscription),
@@ -82,7 +82,7 @@ export class InscriptionController {
 
   @Delete('delete-inscription-form/:id')
   async deleteInscriptionForm(@Param('id') id: string) {
-    await this.inscriptionFormService.deleteInscriptionForm(id);
+    await this.inscriptionService.deleteInscriptionForm(id);
     return { message: 'Formulario de inscripción eliminado correctamente' };
   }
 
@@ -92,6 +92,17 @@ export class InscriptionController {
     @Param('documentType') documentType: string,
     @Res() res: Response,
   ) {
-    await this.inscriptionFormService.downloadDocument(id, documentType, res);
+    await this.inscriptionService.downloadDocument(id, documentType, res);
+  }
+
+  @Get('inscription-docs/:id')
+  @UseGuards(AuthGuard('jwt-cookie'))
+  async getInscriptionDocumentsByRecordId(@Param('id') id: string) {
+    const documents =
+      await this.inscriptionService.getInscriptionDocumentsByRecordId(id);
+    return {
+      message: 'Documentos de inscripción obtenidos correctamente',
+      documents,
+    };
   }
 }

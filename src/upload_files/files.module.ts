@@ -1,6 +1,6 @@
 import { Module, Global } from '@nestjs/common';
-import { PersonalDocumentsService } from './services/personal-documents.service';
-import { InscriptionFormService } from './services/inscription-form.service';
+import { PersonalDocumentsService } from './services/personal.service';
+import { InscriptionFormService } from './services/inscription.service';
 import { DegreeService } from './services/degree.service';
 import { PersonalController } from './controller/personal.controller';
 import { InscriptionController } from './controller/inscription.controller';

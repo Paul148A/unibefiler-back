@@ -21,7 +21,7 @@ import { UpdateInscriptionDto } from '../dto/inscription-document/update-inscrip
 import { RecordEntity } from '../entities/record.entity';
 
 @Injectable()
-export class InscriptionFormService {
+export class InscriptionService {
   constructor(
     @Inject(UploadFilesRepositoryEnum.INSCRIPTION_DOCUMENTS_REPOSITORY)
     private readonly inscriptionFormRepository: Repository<InscriptionDocumentsEntity>,
@@ -235,5 +235,19 @@ export class InscriptionFormService {
     }
 
     return mapping[documentType];
+  }
+
+  async getInscriptionDocumentsByRecordId(recordId: string,): Promise<InscriptionDocumentsEntity[]> {
+    const record = await this.recordRepository.findOne({
+      where: { id: recordId },
+    });
+
+    if (!record) {
+      throw new NotFoundException(`Record con ID ${recordId} no encontrado`);
+    }
+
+    return this.inscriptionFormRepository.find({
+      where: { record: { id: recordId } },
+    });
   }
 }

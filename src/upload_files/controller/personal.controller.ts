@@ -14,7 +14,7 @@ import {
   Request,
   NotFoundException,
 } from '@nestjs/common';
-import { PersonalDocumentsService } from '../services/personal-documents.service';
+import { PersonalService } from '../services/personal.service';
 import { Response } from 'express';
 import { PersonalDocumentsResponseDto } from '../dto/personal-document/personal-document-response.dto';
 import { AuthGuard } from '@nestjs/passport';
@@ -23,13 +23,13 @@ import { UsersService } from 'src/auth/services/user.service';
 @Controller('api1/personal')
 export class PersonalController {
   constructor(
-    private readonly personalDocumentsService: PersonalDocumentsService,
+    private readonly personalDocumentsService: PersonalService,
     private readonly usersService: UsersService,
   ) {}
 
   @Post('upload-personal-documents')
   @UseGuards(AuthGuard('jwt-cookie'))
-  @UseInterceptors(PersonalDocumentsService.getFileUploadInterceptor())
+  @UseInterceptors(PersonalService.getFileUploadInterceptor())
   async uploadPersonalDocuments(@UploadedFiles() files: Express.Multer.File[], @Request() req,) {
     const userId = req.user.sub;
     const user = await this.usersService.findOne(userId);
@@ -45,7 +45,7 @@ export class PersonalController {
   }
 
   @Put('update-personal-documents/:id')
-  @UseInterceptors(PersonalDocumentsService.getFileFieldsInterceptor())
+  @UseInterceptors(PersonalService.getFileFieldsInterceptor())
   async updatePersonalDocuments(
     @Param('id') id: string,
     @UploadedFiles() files,

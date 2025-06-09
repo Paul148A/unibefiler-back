@@ -21,7 +21,7 @@ import { UpdatePersonalDocumentsDto } from '../dto/personal-document/update-pers
 import { RecordEntity } from '../entities/record.entity';
 
 @Injectable()
-export class PersonalDocumentsService {
+export class PersonalService {
   constructor(
     @Inject(UploadFilesRepositoryEnum.PERSONAL_DOCUMENTS_REPOSITORY)
     private readonly personalDocumentsRepository: Repository<PersonalDocumentsEntity>,
