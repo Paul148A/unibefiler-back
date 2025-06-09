@@ -1,4 +1,4 @@
-import { DegreeDocumentsEntity } from "src/upload_files/entities/degree-documents.entity";
+import { DegreeDocumentsEntity } from "../../entities/degree-documents.entity";
 
 export class DegreeResponseDto {
   id: string;

@@ -237,17 +237,10 @@ export class InscriptionService {
     return mapping[documentType];
   }
 
-  async getInscriptionDocumentsByRecordId(recordId: string,): Promise<InscriptionDocumentsEntity[]> {
-    const record = await this.recordRepository.findOne({
-      where: { id: recordId },
-    });
-
-    if (!record) {
-      throw new NotFoundException(`Record con ID ${recordId} no encontrado`);
-    }
-
+  async getInscriptionDocumentsByRecordId(recordId: string): Promise<InscriptionDocumentsEntity[]> {
     return this.inscriptionFormRepository.find({
       where: { record: { id: recordId } },
+      relations: ['record']
     });
   }
 }

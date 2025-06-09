@@ -61,12 +61,17 @@ export class InscriptionController {
   }
 
   @Get('list-inscription-forms')
-  async listInscriptionForms() {
-    const inscriptions =
-      await this.inscriptionService.getAllInscriptionForms();
+  @UseGuards(AuthGuard('jwt-cookie'))
+  async listInscriptionForms(@Request() req) {
+    const userId = req.user.sub;
+    const user = await this.usersService.findOne(userId);
+    if (!user.record) {
+      throw new NotFoundException('El usuario no tiene un record asociado');
+    }
+    const documents = await this.inscriptionService.getInscriptionDocumentsByRecordId(user.record.id);
     return {
-      message: 'Formularios de inscripción obtenidos correctamente',
-      inscriptionForms: inscriptions.map((i) => new InscriptionResponseDto(i)),
+      message: 'Documentos de inscripción obtenidos correctamente',
+      inscriptionForms: documents.map((d) => new InscriptionResponseDto(d)),
     };
   }
 

@@ -1,4 +1,4 @@
-import { getDegreeDocumentsByRecordId } from '../../../../unibe-filer-front/src/services/upload-files/degree-documents.service';
+// import { getDegreeDocumentsByRecordId } from '../../../../unibe-filer-front/src/services/upload-files/degree-documents.service';
 import {
   Controller,
   Post,
@@ -19,6 +19,7 @@ import { DegreeService } from '../services/degree.service';
 import { Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from 'src/auth/services/user.service';
+import { DegreeResponseDto } from '../dto/degree-document/degree-response.dto';
 
 @Controller('api1/degree')
 export class DegreeController {
@@ -53,9 +54,18 @@ export class DegreeController {
   }
 
   @Get('list-degrees')
-  async listDegrees() {
-    const degrees = await this.degreeService.getAllDegrees();
-    return { message: 'Documentos de grado obtenidos correctamente', degrees };
+  @UseGuards(AuthGuard('jwt-cookie'))
+  async listDegrees(@Request() req) {
+    const userId = req.user.sub;
+    const user = await this.usersService.findOne(userId);
+    if (!user.record) {
+      throw new NotFoundException('El usuario no tiene un record asociado');
+    }
+    const documents = await this.degreeService.getDegreeDocumentsByRecordId(user.record.id);
+    return {
+      message: 'Documentos de grado obtenidos correctamente',
+      degrees: documents.map((d) => new DegreeResponseDto(d)),
+    };
   }
 
   @Get('degree/:id')
@@ -81,7 +91,7 @@ export class DegreeController {
 
   @Get('degree-docs/:id')
   async getDegreeDocumentsByRecordId(@Param('id') id: string) {
-    const documents = await getDegreeDocumentsByRecordId(id);
+    const documents = await this.getDegreeDocumentsByRecordId(id);
     return {
       message: 'Documentos de grado obtenidos correctamente',
       documents,
