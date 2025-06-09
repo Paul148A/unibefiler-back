@@ -242,4 +242,18 @@ export class PersonalService {
 
     return mapping[documentType];
   }
+
+   async getPersonalDocumentsByRecordId(recordId: string,): Promise<PersonalDocumentsEntity[]> {
+      const record = await this.recordRepository.findOne({
+        where: { id: recordId },
+      });
+  
+      if (!record) {
+        throw new NotFoundException(`Record con ID ${recordId} no encontrado`);
+      }
+  
+      return this.personalDocumentsRepository.find({
+        where: { record: { id: recordId } },
+      });
+    }
 }

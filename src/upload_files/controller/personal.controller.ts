@@ -1,3 +1,4 @@
+import { getPersonalDocumentsByRecordId } from './../../../../unibe-filer-front/src/services/upload-files/personal-documents.service';
 import {
   Controller,
   Post,
@@ -96,5 +97,16 @@ export class PersonalController {
     @Res() res: Response,
   ) {
     await this.personalDocumentsService.downloadDocument(id, documentType, res);
+  }
+
+  @Get('personal-docs/:id')
+  @UseGuards(AuthGuard('jwt-cookie'))
+  async getPersonalDocumentsByRecordId(@Param('id') id: string) {
+    const documents =
+      await this.personalDocumentsService.getPersonalDocumentsByRecordId(id);
+    return {
+      message: 'Documentos personales obtenidos correctamente',
+      documents,
+    };
   }
 }
