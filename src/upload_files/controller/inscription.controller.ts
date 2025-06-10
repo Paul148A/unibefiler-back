@@ -100,14 +100,13 @@ export class InscriptionController {
     await this.inscriptionService.downloadDocument(id, documentType, res);
   }
 
-  @Get('inscription-docs/:id')
+  @Get('record/:id')
   @UseGuards(AuthGuard('jwt-cookie'))
   async getInscriptionDocumentsByRecordId(@Param('id') id: string) {
-    const documents =
-      await this.inscriptionService.getInscriptionDocumentsByRecordId(id);
+    const documents = await this.inscriptionService.getInscriptionDocumentsByRecordId(id);
     return {
       message: 'Documentos de inscripción obtenidos correctamente',
-      documents,
+      data: documents,
     };
   }
 }

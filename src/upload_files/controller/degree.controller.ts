@@ -89,12 +89,12 @@ export class DegreeController {
     await this.degreeService.downloadDocument(id, documentType, res);
   }
 
-  @Get('degree-docs/:id')
-  async getDegreeDocumentsByRecordId(@Param('id') id: string) {
-    const documents = await this.getDegreeDocumentsByRecordId(id);
+  @Get('record/:id')
+  async findDegreeDocumentsByRecordId(@Param('id') id: string) {
+    const documents = await this.degreeService.getDegreeDocumentsByRecordId(id);
     return {
       message: 'Documentos de grado obtenidos correctamente',
-      documents,
+      data: documents,
     };
   }
 }

@@ -103,14 +103,13 @@ export class PersonalController {
     await this.personalDocumentsService.downloadDocument(id, documentType, res);
   }
 
-  @Get('personal-docs/:id')
+  @Get('record/:id')
   @UseGuards(AuthGuard('jwt-cookie'))
   async getPersonalDocumentsByRecordId(@Param('id') id: string) {
-    const documents =
-      await this.personalDocumentsService.getPersonalDocumentsByRecordId(id);
+    const documents = await this.personalDocumentsService.getPersonalDocumentsByRecordId(id);
     return {
       message: 'Documentos personales obtenidos correctamente',
-      documents,
+      data: documents,
     };
   }
 }
