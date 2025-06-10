@@ -40,7 +40,7 @@ export class PersonalController {
     const documents = await this.personalDocumentsService.savePersonalDocuments(createDto);
     return {
       message: 'Documentos personales subidos correctamente',
-      personalDocuments: new PersonalDocumentsResponseDto(documents),
+      data: new PersonalDocumentsResponseDto(documents),
     };
   }
 
@@ -59,7 +59,7 @@ export class PersonalController {
       );
     return {
       message: 'Documentos personales actualizados correctamente',
-      personalDocuments: new PersonalDocumentsResponseDto(updatedDocuments),
+      data: new PersonalDocumentsResponseDto(updatedDocuments),
     };
   }
 
@@ -74,7 +74,7 @@ export class PersonalController {
     const documents = await this.personalDocumentsService.getPersonalDocumentsByRecordId(user.record.id);
     return {
       message: 'Documentos personales obtenidos correctamente',
-      personalDocuments: documents.map((d) => new PersonalDocumentsResponseDto(d)),
+      data: documents.map((d) => new PersonalDocumentsResponseDto(d)),
     };
   }
 
@@ -84,7 +84,7 @@ export class PersonalController {
       await this.personalDocumentsService.getPersonalDocumentsById(id);
     return {
       message: 'Documentos personales obtenidos correctamente',
-      personalDocuments: new PersonalDocumentsResponseDto(documents),
+      data: new PersonalDocumentsResponseDto(documents),
     };
   }
 

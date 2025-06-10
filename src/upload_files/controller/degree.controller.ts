@@ -64,7 +64,7 @@ export class DegreeController {
     const documents = await this.degreeService.getDegreeDocumentsByRecordId(user.record.id);
     return {
       message: 'Documentos de grado obtenidos correctamente',
-      degrees: documents.map((d) => new DegreeResponseDto(d)),
+      data: documents.map((d) => new DegreeResponseDto(d)),
     };
   }
 

@@ -40,7 +40,7 @@ export class InscriptionController {
     const inscription = await this.inscriptionService.saveInscriptionForm(createInscriptionDto);
     return {
         message: 'Formulario de inscripción subido correctamente',
-        inscriptionForms: new InscriptionResponseDto(inscription),
+        data: new InscriptionResponseDto(inscription),
     };
   } 
 
@@ -56,7 +56,7 @@ export class InscriptionController {
       );
     return {
       message: 'Formulario de inscripción actualizado correctamente',
-      inscriptionForms: new InscriptionResponseDto(updatedInscription),
+      data: new InscriptionResponseDto(updatedInscription),
     };
   }
 
@@ -71,7 +71,7 @@ export class InscriptionController {
     const documents = await this.inscriptionService.getInscriptionDocumentsByRecordId(user.record.id);
     return {
       message: 'Documentos de inscripción obtenidos correctamente',
-      inscriptionForms: documents.map((d) => new InscriptionResponseDto(d)),
+      data: documents.map((d) => new InscriptionResponseDto(d)),
     };
   }
 
@@ -81,7 +81,7 @@ export class InscriptionController {
       await this.inscriptionService.getInscriptionFormById(id);
     return {
       message: 'Formulario de inscripción obtenido correctamente',
-      inscriptionForms: new InscriptionResponseDto(inscription),
+      data: new InscriptionResponseDto(inscription),
     };
   }
 
