@@ -1,4 +1,3 @@
-import { getPersonalDocumentsByRecordId } from './../../../../unibe-filer-front/src/services/upload-files/personal-documents.service';
 import {
   Controller,
   Post,
