@@ -19,6 +19,7 @@ import { extname } from 'path';
 import { CreateInscriptionDto } from '../dto/inscription-document/create-inscription.dto';
 import { UpdateInscriptionDto } from '../dto/inscription-document/update-inscription.dto';
 import { RecordEntity } from '../entities/record.entity';
+import { UpdateStatusDto } from '../dto/inscription-document/update-status.dto';
 
 @Injectable()
 export class InscriptionService {
@@ -242,5 +243,18 @@ export class InscriptionService {
       where: { record: { id: recordId } },
       relations: ['record']
     });
+  }
+
+  async updateCertificateStatus(id: string, updateStatusDto: UpdateStatusDto): Promise<InscriptionDocumentsEntity> {
+    const inscription = await this.inscriptionFormRepository.findOne({
+      where: { id }
+    });
+
+    if (!inscription) {
+      throw new NotFoundException(`Documento de inscripción con ID ${id} no encontrado`);
+    }
+
+    inscription.englishCertificateStatus = updateStatusDto.status;
+    return this.inscriptionFormRepository.save(inscription);
   }
 }

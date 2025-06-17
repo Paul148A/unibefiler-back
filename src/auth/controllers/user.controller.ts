@@ -17,14 +17,25 @@ export class UsersController {
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() payload: CreateUserDto): Promise<ResponseHttpModel> {
     const serviceResponse = await this.usersService.createUserWithRecord(payload);
-    return {
-      data: {
-        user: serviceResponse.user,
-        record: serviceResponse.record
-      },
-      message: 'Usuario creado con un record automaticamente',
-      title: 'Created',
-    };
+    
+    if (serviceResponse.record) {
+      return {
+        data: {
+          user: serviceResponse.user,
+          record: serviceResponse.record
+        },
+        message: 'Usuario creado con un record automaticamente',
+        title: 'Created',
+      };
+    } else {
+      return {
+        data: {
+          user: serviceResponse.user
+        },
+        message: 'Usuario creado exitosamente',
+        title: 'Created',
+      };
+    }
   }
 
   @ApiOperation({ summary: 'Find All' })

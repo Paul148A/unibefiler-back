@@ -50,6 +50,16 @@ export class InscriptionDocumentsEntity {
     nullable: true,
   })
   englishCertificateDoc: string;
+
+  @Column({
+    type: 'enum',
+    enum: ['approved', 'rejected', 'pending'],
+    name: 'english_certificate_status',
+    comment: 'Estado del certificado de inglés',
+    nullable: true,
+    default: 'pending'
+  })
+  englishCertificateStatus: 'approved' | 'rejected' | 'pending';
   
   @Column({
     type: 'varchar',

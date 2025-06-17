@@ -24,17 +24,28 @@ export class UsersService {
     ) {
     }
 
-    async createUserWithRecord(payload: CreateUserDto): Promise<{ user: UserEntity, record: RecordEntity }> {
+    async createUserWithRecord(payload: CreateUserDto): Promise<{ user: UserEntity, record?: RecordEntity }> {
         const user = await this.create(payload);
 
         if (!user) {
             throw new NotFoundException('No se pudo crear el usuario');
         }
-        const record = await this.recordService.createRecord(user.id);
+
+        // Solo crear record y documentos si el rol es "student" o "Estudiante"
+        const roleName = user.role.name.toLowerCase();
+        const roleDescription = user.role.description.toLowerCase();
+        
+        if (roleName === 'student' || roleName === 'estudiante' || 
+            roleDescription === 'student' || roleDescription === 'estudiante') {
+            const record = await this.recordService.createRecord(user.id);
+            return {
+                user,
+                record
+            };
+        }
 
         return {
-            user,
-            record
+            user
         };
     }
 

@@ -8,6 +8,7 @@ export class InscriptionResponseDto {
   englishCertificateDoc: string;
   enrollmentCertificateDoc: string;
   approvalDoc: string;
+  englishCertificateStatus: 'approved' | 'rejected' | 'pending';
 
   constructor(entity: InscriptionDocumentsEntity) {
     this.id = entity.id;
@@ -17,5 +18,6 @@ export class InscriptionResponseDto {
     this.englishCertificateDoc = entity.englishCertificateDoc;
     this.enrollmentCertificateDoc = entity.enrollmentCertificateDoc;
     this.approvalDoc = entity.approvalDoc;
+    this.englishCertificateStatus = entity.englishCertificateStatus;
   }
 }

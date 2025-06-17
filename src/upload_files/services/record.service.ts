@@ -4,12 +4,21 @@ import { RecordEntity } from '../entities/record.entity';
 import { UploadFilesRepositoryEnum } from '../enums/upload-files-repository.enum';
 import { UserEntity } from 'src/auth/entities/user.entity';
 import { ServiceResponseHttpModel } from 'src/auth/models/service-response-http.model';
+import { PersonalService } from './personal.service';
+import { InscriptionService } from './inscription.service';
+import { DegreeService } from './degree.service';
+import { CreatePersonalDocumentsDto } from '../dto/personal-document/create-personal-document.dto';
+import { CreateInscriptionDto } from '../dto/inscription-document/create-inscription.dto';
+import { CreateDegreeDto } from '../dto/degree-document/create-degree.dto';
 
 @Injectable()
 export class RecordService {
   constructor(
     @Inject(UploadFilesRepositoryEnum.RECORD_REPOSITORY)
     private readonly recordRepository: Repository<RecordEntity>,
+    private readonly personalService: PersonalService,
+    private readonly inscriptionService: InscriptionService,
+    private readonly degreeService: DegreeService,
   ) { }
 
   async createRecord(userId: string): Promise<RecordEntity> {
@@ -18,7 +27,45 @@ export class RecordService {
       code,
       user: { id: userId }
     });
-    return this.recordRepository.save(record);
+    const savedRecord = await this.recordRepository.save(record);
+
+    const personalDto: CreatePersonalDocumentsDto = {
+      record_id: savedRecord.id,
+      pictureDoc: null,
+      dniDoc: null,
+      votingBallotDoc: null,
+      notarizDegreeDoc: null
+    };
+
+    const inscriptionDto: CreateInscriptionDto = {
+      record_id: savedRecord.id,
+      registrationDoc: null,
+      semesterGradeChartDoc: null,
+      reEntryDoc: null,
+      englishCertificateDoc: null,
+      enrollmentCertificateDoc: null,
+      approvalDoc: null
+    };
+
+    const degreeDto: CreateDegreeDto = {
+      record_id: savedRecord.id,
+      topicComplainDoc: null,
+      topicApprovalDoc: null,
+      tutorAssignmentDoc: null,
+      tutorFormatDoc: null,
+      antiplagiarismDoc: null,
+      tutorLetter: null,
+      electiveGrade: null,
+      academicClearance: null
+    };
+
+    await Promise.all([
+      this.personalService.savePersonalDocuments(personalDto),
+      this.inscriptionService.saveInscriptionForm(inscriptionDto),
+      this.degreeService.saveDegree(degreeDto)
+    ]);
+
+    return savedRecord;
   }
 
   async getRecordById(id: string): Promise<RecordEntity> {
@@ -68,5 +115,17 @@ export class RecordService {
       throw new NotFoundException(`No se encontraron registros para el usuario con ID ${userId}`);
     }
     return records;
+  }
+
+  async getRecordsByUserRole(name: string): Promise<ServiceResponseHttpModel> {
+    const relations = { user: { role: true } };
+    const response = await this.recordRepository.findAndCount({
+      where: { user: { role: { name: name } } },
+      relations,
+    });
+
+    return {
+      data: response[0],
+    };
   }
 }

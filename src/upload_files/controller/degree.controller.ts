@@ -20,6 +20,7 @@ import { Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from 'src/auth/services/user.service';
 import { DegreeResponseDto } from '../dto/degree-document/degree-response.dto';
+import { DegreeDocumentsEntity } from '../entities/degree-documents.entity';
 
 @Controller('api1/degree')
 export class DegreeController {
@@ -45,12 +46,17 @@ export class DegreeController {
   @Put('update-degree/:id')
   @UseInterceptors(DegreeService.getFileUploadInterceptor())
   async updateDegree(@Param('id') id: string, @UploadedFiles() files) {
-    const updateDegreeDto = await this.degreeService.processUploadedFiles(
-      files,
-      id
-    );
-    await this.degreeService.updateDegree(id, updateDegreeDto);
-    return { message: 'Documentos de grado actualizados correctamente' };
+    const UpdateDegreeDto =
+      await this.degreeService.processUploadedFilesForUpdate(files);
+    const updatedDegree =
+      await this.degreeService.updateDegreeForm(
+        id,
+        UpdateDegreeDto,
+      );
+    return {
+      message: 'Formulario de inscripción actualizado correctamente',
+      data: new DegreeResponseDto(updatedDegree),
+    };
   }
 
   @Get('list-degrees')

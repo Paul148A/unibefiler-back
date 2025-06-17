@@ -13,12 +13,14 @@ import {
   UseGuards,
   Request,
   NotFoundException,
+  Patch,
 } from '@nestjs/common';
 import { InscriptionService } from '../services/inscription.service';
 import { Response } from 'express';
 import { InscriptionResponseDto } from '../dto/inscription-document/inscription-response.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from 'src/auth/services/user.service';
+import { UpdateStatusDto } from '../dto/inscription-document/update-status.dto';
 
 @Controller('api1/inscription')
 export class InscriptionController {
@@ -107,6 +109,19 @@ export class InscriptionController {
     return {
       message: 'Documentos de inscripción obtenidos correctamente',
       data: documents,
+    };
+  }
+
+  @Patch('update-status/:id')
+  @UseGuards(AuthGuard('jwt-cookie'))
+  async updateCertificateStatus(
+    @Param('id') id: string,
+    @Body() updateStatusDto: UpdateStatusDto
+  ) {
+    const inscription = await this.inscriptionService.updateCertificateStatus(id, updateStatusDto);
+    return {
+      message: 'Estado del certificado actualizado correctamente',
+      data: new InscriptionResponseDto(inscription)
     };
   }
 }

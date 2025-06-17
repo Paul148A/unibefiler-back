@@ -34,20 +34,35 @@ export class AuthService {
             Object.assign(user, payload);
             const createdUser = await this.repository.save(user);
 
-            // 3. Crear automáticamente el record asociado
-            const record = await this.recordService.createRecord(createdUser.id);
+            // 3. Cargar el usuario con las relaciones para verificar el rol
+            const userWithRole = await this.repository.findOne({
+                where: { id: createdUser.id },
+                relations: { role: true }
+            });
 
-            // 4. Retornar respuesta sin password
-            const { password, ...userData } = createdUser;
+            // 4. Crear automáticamente el record asociado solo si es estudiante
+            let record = null;
+            if (userWithRole) {
+                const roleName = userWithRole.role.name.toLowerCase();
+                const roleDescription = userWithRole.role.description.toLowerCase();
+                
+                if (roleName === 'student' || roleName === 'estudiante' || 
+                    roleDescription === 'student' || roleDescription === 'estudiante') {
+                    record = await this.recordService.createRecord(createdUser.id);
+                }
+            }
+
+            // 5. Retornar respuesta sin password
+            const { password, ...userData } = userWithRole || createdUser;
 
             return {
                 data: {
                     user: userData,
-                    record: {
+                    record: record ? {
                         id: record.id,
                         code: record.code
-                    },
-                    message: 'Usuario registrado con expediente creado automáticamente',
+                    } : null,
+                    message: record ? 'Usuario registrado con expediente creado automáticamente' : 'Usuario registrado exitosamente',
                 },
             };
         } catch (error) {

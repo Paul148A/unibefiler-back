@@ -56,4 +56,9 @@ export class RecordController {
       title: 'Success',
     };
   }
+
+  @Get('role/:roleName')
+  async findRecordsByUserRole(@Param('roleName') name: string) {
+    return this.recordService.getRecordsByUserRole(name);
+  }
 }

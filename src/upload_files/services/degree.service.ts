@@ -10,11 +10,13 @@ import { UploadFilesRepositoryEnum } from '../enums/upload-files-repository.enum
 import { Response } from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import {
+  FileFieldsInterceptor,
+  FilesInterceptor,
+} from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { CreateDegreeDto } from '../dto/degree-document/create-degree.dto';
-import { DegreeResponseDto } from '../dto/degree-document/degree-response.dto';
 import { UpdateDegreeDto } from '../dto/degree-document/update-degree.dto';
 import { RecordEntity } from '../entities/record.entity';
 
@@ -107,53 +109,87 @@ export class DegreeService {
     };
   }
 
+  async processUploadedFilesForUpdate(files: {
+    topic_complain_doc?: Express.Multer.File[];
+    topic_approval_doc?: Express.Multer.File[];
+    tutor_assignment_doc?: Express.Multer.File[];
+    tutor_format_doc?: Express.Multer.File[];
+    antiplagiarism_doc?: Express.Multer.File[];
+    tutor_letter?: Express.Multer.File[];
+    elective_grade?: Express.Multer.File[];
+    academic_clearance?: Express.Multer.File[];
+  }): Promise<UpdateDegreeDto> {
+    const updates: UpdateDegreeDto = {};
+
+    if (files.topic_complain_doc?.[0]) updates.topicComplainDoc = files.topic_complain_doc[0].filename;
+    if (files.topic_approval_doc?.[0]) updates.topicApprovalDoc = files.topic_approval_doc[0].filename;
+    if (files.tutor_assignment_doc?.[0]) updates.tutorAssignmentDoc = files.tutor_assignment_doc[0].filename;
+    if (files.tutor_format_doc?.[0]) updates.tutorFormatDoc = files.tutor_format_doc[0].filename;
+    if (files.antiplagiarism_doc?.[0]) updates.antiplagiarismDoc = files.antiplagiarism_doc[0].filename;
+    if (files.tutor_letter?.[0]) updates.tutorLetter = files.tutor_letter[0].filename;
+    if (files.elective_grade?.[0]) updates.electiveGrade = files.elective_grade[0].filename;
+    if (files.academic_clearance?.[0]) updates.academicClearance = files.academic_clearance[0].filename;
+
+    if (Object.keys(updates).length === 0) {
+      throw new BadRequestException('No se proporcionaron archivos para actualizar');
+    }
+
+    return updates;
+  }
+
   async saveDegree(
-    createDegreeDto: CreateDegreeDto,
-  ): Promise<DegreeResponseDto> {
+    createDto: CreateDegreeDto,
+  ): Promise<DegreeDocumentsEntity> {
     const record = await this.recordRepository.findOne({
-      where: { id: createDegreeDto.record_id },
+      where: { id: createDto.record_id },
     });
 
     if (!record) {
-      throw new NotFoundException(`Record con ID ${createDegreeDto.record_id} no encontrado`);
+      throw new NotFoundException(`Record con ID ${createDto.record_id} no encontrado`);
     }
 
     const degree = this.degreeRepository.create({
-      ...createDegreeDto,
+      ...createDto,
       record: record,
     });
     
-    const savedDegree = await this.degreeRepository.save(degree);
-    return new DegreeResponseDto(savedDegree);
+    return this.degreeRepository.save(degree);
   }
 
-  async updateDegree(
+  async updateDegreeForm(
     id: string,
-    updateDegreeDto: UpdateDegreeDto,
-  ): Promise<DegreeResponseDto> {
-    const degree = await this.degreeRepository.findOne({ where: { id } });
+    updateDto: UpdateDegreeDto,
+  ): Promise<DegreeDocumentsEntity> {
+    const degree = await this.degreeRepository.findOne({
+      where: { id },
+    });
     if (!degree) {
-      throw new NotFoundException(`Grado con ID ${id} no encontrado`);
+      throw new NotFoundException(
+        `Documentos de grado con ID ${id} no encontrados`,
+      );
     }
 
-    Object.assign(degree, updateDegreeDto);
-    const updatedDegree = await this.degreeRepository.save(degree);
-    return new DegreeResponseDto(updatedDegree);
+    Object.assign(degree, updateDto);
+    return this.degreeRepository.save(degree);
   }
 
-  async getDegreeById(id: string): Promise<DegreeResponseDto> {
-    const degree = await this.degreeRepository.findOne({ where: { id } });
+  async getDegreeById(id: string): Promise<DegreeDocumentsEntity> {
+    const degree = await this.degreeRepository.findOne({
+      where: { id },
+    });
     if (!degree) {
-      throw new NotFoundException(`Grado con ID ${id} no encontrado`);
+      throw new NotFoundException(
+        `Documentos de grado con ID ${id} no encontrados`,
+      );
     }
-    return new DegreeResponseDto(degree);
+    return degree;
   }
 
   async deleteDegree(id: string): Promise<void> {
     const result = await this.degreeRepository.delete(id);
     if (result.affected === 0) {
       throw new NotFoundException(
-        `Documento de grado con ID ${id} no encontrado`,
+        `Documentos de grado con ID ${id} no encontrados`,
       );
     }
   }
@@ -163,17 +199,19 @@ export class DegreeService {
     documentType: string,
     res: Response,
   ): Promise<void> {
-    const degree = await this.degreeRepository.findOne({ where: { id } });
+    const degree = await this.degreeRepository.findOne({
+      where: { id },
+    });
     if (!degree) {
-      throw new NotFoundException(`Grado con ID ${id} no encontrado`);
+      throw new NotFoundException(
+        `Documentos de grado con ID ${id} no encontrados`,
+      );
     }
 
     const documentField = this.mapDocumentTypeToField(documentType);
     const filename = degree[documentField];
     if (!filename) {
-      throw new NotFoundException(
-        `Documento ${documentType} no encontrado para este grado`,
-      );
+      throw new NotFoundException(`Documento ${documentType} no encontrado`);
     }
 
     const filePath = path.join('./uploads/documentos-grado', filename);
@@ -214,9 +252,5 @@ export class DegreeService {
       where: { record: { id: recordId } },
       relations: ['record']
     });
-  }
-
-  async getAllDegrees(): Promise<DegreeDocumentsEntity[]> {
-    return this.degreeRepository.find();
   }
 }
