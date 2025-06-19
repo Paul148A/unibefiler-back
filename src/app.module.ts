@@ -7,6 +7,7 @@ import * as Joi from 'joi';
 import { config } from './config/config';
 import { environments } from './enviroments';
 import { FilesModule } from './upload_files/files.module';
+import { CoreModule } from './core/core.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { FilesModule } from './upload_files/files.module';
 
     AuthModule,
     FilesModule,
+    CoreModule
   ],
   controllers: [AppController],
   providers: [AppService],

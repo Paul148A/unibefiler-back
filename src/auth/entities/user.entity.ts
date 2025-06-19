@@ -9,6 +9,8 @@ import {
 import { RoleEntity } from './rol.entity';
 import { StatusEntity } from './status.entity';
 import { RecordEntity } from 'src/upload_files/entities/record.entity';
+import { SemesterEntity } from 'src/core/entities/semester.entity';
+import { CareerEntity } from 'src/core/entities/career.entity';
 
 @Entity('users', { schema: 'auth' })
 export class UserEntity {
@@ -23,6 +25,14 @@ export class UserEntity {
   @ManyToOne(() => StatusEntity, (status) => status.users)
   @JoinColumn({ name: 'status_id' })
   status: StatusEntity;
+
+  @ManyToOne(() => SemesterEntity, (status) => status.users)
+  @JoinColumn({ name: 'status_id' })
+  semester: SemesterEntity;
+
+   @ManyToOne(() => CareerEntity, (status) => status.users)
+  @JoinColumn({ name: 'status_id' })
+  career: CareerEntity;
   
   @OneToOne(() => RecordEntity, (record) => record.user,{
     cascade: true,
