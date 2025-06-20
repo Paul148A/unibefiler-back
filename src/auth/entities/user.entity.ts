@@ -26,12 +26,12 @@ export class UserEntity {
   @JoinColumn({ name: 'status_id' })
   status: StatusEntity;
 
-  @ManyToOne(() => SemesterEntity, (status) => status.users)
-  @JoinColumn({ name: 'status_id' })
+  @ManyToOne(() => SemesterEntity, (semester) => semester.users)
+  @JoinColumn({ name: 'semester_id' })
   semester: SemesterEntity;
 
-   @ManyToOne(() => CareerEntity, (status) => status.users)
-  @JoinColumn({ name: 'status_id' })
+   @ManyToOne(() => CareerEntity, (career) => career.users)
+  @JoinColumn({ name: 'career_id' })
   career: CareerEntity;
   
   @OneToOne(() => RecordEntity, (record) => record.user,{
