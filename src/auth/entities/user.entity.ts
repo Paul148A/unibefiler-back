@@ -75,4 +75,11 @@ export class UserEntity {
     comment: 'Contraseña del usuario',
   })
   password: string;
+
+  @Column({
+    type: 'varchar',
+    name: 'is_approved',
+    comment: 'Si el estudiante es homologado o no',
+  })
+  is_approved: boolean;
 }
