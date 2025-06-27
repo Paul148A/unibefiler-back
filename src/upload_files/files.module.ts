@@ -7,6 +7,8 @@ import { InscriptionController } from './controller/inscription.controller';
 import { DegreeController } from './controller/degree.controller';
 import { RecordService } from './services/record.service';
 import { RecordController } from './controller/record.controller';
+import { PermissionService } from './services/permission.service';
+import { PermissionController } from './controller/permission.controller';
 import { uploadFilesProviders } from './providers/upload-files.provider';
 import { DatabaseModule } from 'src/database/database.module';
 import { AuthModule } from 'src/auth/auth.module';
@@ -21,20 +23,23 @@ import { AuthModule } from 'src/auth/auth.module';
     PersonalController,
     InscriptionController,
     DegreeController,
-    RecordController
+    RecordController,
+    PermissionController
   ],
   providers: [
     ...uploadFilesProviders,
     PersonalService,
     InscriptionService,
     DegreeService,
-    RecordService
+    RecordService,
+    PermissionService
   ],
   exports: [
     PersonalService,
     InscriptionService,
     DegreeService,
-    RecordService
+    RecordService,
+    PermissionService
   ]
 })
 export class FilesModule { }

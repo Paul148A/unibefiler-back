@@ -3,6 +3,7 @@ import { Column, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn
 import { PersonalDocumentsEntity } from './personal-documents.entity';
 import { InscriptionDocumentsEntity } from './inscription-documents.entity';
 import { DegreeDocumentsEntity } from './degree-documents.entity';
+import { PermissionDocumentsEntity } from './permission-documents.entity';
 
 @Entity('record', { schema: 'upload_files' })
 export class RecordEntity {
@@ -22,6 +23,9 @@ export class RecordEntity {
 
   @OneToMany(() => DegreeDocumentsEntity, (degreeDocument) => degreeDocument.record)
   degreeDocuments: DegreeDocumentsEntity[];
+
+  @OneToMany(() => PermissionDocumentsEntity, (permissionDocument) => permissionDocument.record)
+  permissionDocuments: PermissionDocumentsEntity[];
 
   /** Columns **/
   @Column({

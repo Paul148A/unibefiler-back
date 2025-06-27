@@ -6,6 +6,7 @@ import { InscriptionDocumentsEntity } from '../entities/inscription-documents.en
 import { DegreeDocumentsEntity } from '../entities/degree-documents.entity';
 import { GradeEnrollmentEntity } from '../entities/grade-enrollment.entity';
 import { EnrollmentDocEntity } from '../entities/enrollment-documents.entity';
+import { PermissionDocumentsEntity } from '../entities/permission-documents.entity';
 
 export const uploadFilesProviders = [
     {
@@ -36,6 +37,11 @@ export const uploadFilesProviders = [
     {
         provide: UploadFilesRepositoryEnum.ENROLLMENT_DOC_REPOSITORY,
         useFactory: (dataSource: DataSource) => dataSource.getRepository(EnrollmentDocEntity),
+        inject: [ConfigEnum.PG_DATA_SOURCE],
+    },
+    {
+        provide: UploadFilesRepositoryEnum.PERMISSION_DOCUMENTS_REPOSITORY,
+        useFactory: (dataSource: DataSource) => dataSource.getRepository(PermissionDocumentsEntity),
         inject: [ConfigEnum.PG_DATA_SOURCE],
     }
 ];

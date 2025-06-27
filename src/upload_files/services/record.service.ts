@@ -1,5 +1,5 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { QueryRunner, Repository } from 'typeorm';
+import { ILike, QueryRunner, Repository } from 'typeorm';
 import { RecordEntity } from '../entities/record.entity';
 import { UploadFilesRepositoryEnum } from '../enums/upload-files-repository.enum';
 import { UserEntity } from 'src/auth/entities/user.entity';
@@ -121,6 +121,45 @@ export class RecordService {
     const relations = { user: { role: true } };
     const response = await this.recordRepository.findAndCount({
       where: { user: { role: { name: name } } },
+      relations,
+    });
+
+    return {
+      data: response[0],
+    };
+  }
+
+  async getRecordsByUserDni(dni: string): Promise<ServiceResponseHttpModel> {
+    const relations = { user: true };
+    const response = await this.recordRepository.findAndCount({
+      where: {
+        user: {
+          identification: ILike(`%${dni}%`)
+        } as any
+      },
+      relations,
+    });
+
+    return {
+      data: response[0],
+    };
+  }
+
+  async getRecordsByUserName(name: string): Promise<ServiceResponseHttpModel> {
+    const relations = { user: true };
+    const response = await this.recordRepository.findAndCount({
+      where: [
+        {
+          user: {
+            names: ILike(`%${name}%`)
+          } as any
+        },
+        {
+          user: {
+            last_names: ILike(`%${name}%`)
+          } as any
+        }
+      ],
       relations,
     });
 
