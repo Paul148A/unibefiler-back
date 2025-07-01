@@ -81,5 +81,5 @@ export class UserEntity {
     name: 'is_approved',
     comment: 'Si el estudiante es homologado o no',
   })
-  is_approved: boolean;
+  is_approved: boolean | null;
 }
