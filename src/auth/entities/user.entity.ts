@@ -26,11 +26,11 @@ export class UserEntity {
   @JoinColumn({ name: 'status_id' })
   status: StatusEntity;
 
-  @ManyToOne(() => SemesterEntity, (semester) => semester.users)
+  @ManyToOne(() => SemesterEntity, (semester) => semester.users, { nullable: true })
   @JoinColumn({ name: 'semester_id' })
   semester: SemesterEntity;
 
-   @ManyToOne(() => CareerEntity, (career) => career.users)
+  @ManyToOne(() => CareerEntity, (career) => career.users, { nullable: true })
   @JoinColumn({ name: 'career_id' })
   career: CareerEntity;
   
@@ -77,7 +77,7 @@ export class UserEntity {
   password: string;
 
   @Column({
-    type: 'varchar',
+    type: 'boolean',
     name: 'is_approved',
     comment: 'Si el estudiante es homologado o no',
   })
