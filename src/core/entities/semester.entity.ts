@@ -1,4 +1,5 @@
 import { UserEntity } from 'src/auth/entities';
+import { GradeEntity } from 'src/upload_files/entities/grade.entity';
 import {
   Column,
   Entity,
@@ -14,6 +15,9 @@ export class SemesterEntity {
   /** Foreign Keys **/
   @OneToMany(() => UserEntity, (user) => user.semester)
   users: UserEntity[];
+
+  @OneToMany(() => GradeEntity, (grade) => grade.semester)
+  grades: GradeEntity[];
 
   /** Columns **/
   @Column({

@@ -238,11 +238,17 @@ export class InscriptionService {
     return mapping[documentType];
   }
 
-  async getInscriptionDocumentsByRecordId(recordId: string): Promise<InscriptionDocumentsEntity[]> {
-    return this.inscriptionFormRepository.find({
+  async getInscriptionDocumentsByRecordId(recordId: string): Promise<InscriptionDocumentsEntity> {
+    const inscriptionDocs = await this.inscriptionFormRepository.findOne({
       where: { record: { id: recordId } },
-      relations: ['record']
+      relations: ['record'],
     });
+    if (!inscriptionDocs) {
+      throw new NotFoundException(
+        `No se encontraron documentos de inscripción para el expediente con ID ${recordId}`,
+      );
+    }
+    return inscriptionDocs;
   }
 
   async updateCertificateStatus(id: string, updateStatusDto: UpdateStatusDto): Promise<InscriptionDocumentsEntity> {
@@ -256,5 +262,18 @@ export class InscriptionService {
 
     inscription.englishCertificateStatus = updateStatusDto.status;
     return this.inscriptionFormRepository.save(inscription);
+  }
+
+  async findById(id: string): Promise<InscriptionDocumentsEntity> {
+    const inscription = await this.inscriptionFormRepository.findOne({
+      where: { id },
+      relations: ['record'],
+    });
+
+    if (!inscription) {
+      throw new NotFoundException(`Sección de inscripción con ID ${id} no encontrado`);
+    }
+
+    return inscription;
   }
 }

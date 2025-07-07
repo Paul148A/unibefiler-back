@@ -62,21 +62,6 @@ export class InscriptionController {
     };
   }
 
-  @Get('list-inscription-forms')
-  @UseGuards(AuthGuard('jwt-cookie'))
-  async listInscriptionForms(@Request() req) {
-    const userId = req.user.sub;
-    const user = await this.usersService.findOne(userId);
-    if (!user.record) {
-      throw new NotFoundException('El usuario no tiene un record asociado');
-    }
-    const documents = await this.inscriptionService.getInscriptionDocumentsByRecordId(user.record.id);
-    return {
-      message: 'Documentos de inscripción obtenidos correctamente',
-      data: documents.map((d) => new InscriptionResponseDto(d)),
-    };
-  }
-
   @Get('inscription-form/:id')
   async getInscriptionForm(@Param('id') id: string) {
     const inscription =

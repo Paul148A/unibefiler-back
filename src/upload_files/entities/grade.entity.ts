@@ -7,16 +7,21 @@ import {
     PrimaryGeneratedColumn,
   } from 'typeorm';
 import { InscriptionDocumentsEntity } from './inscription-documents.entity';
+import { SemesterEntity } from 'src/core/entities/semester.entity';
 
-@Entity('grade_enrollment', { schema: 'upload_files' })
-export class GradeEnrollmentEntity {
+@Entity('grades', { schema: 'upload_files' })
+export class GradeEntity {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
     /** Foreign keys */
-    @OneToOne(() => InscriptionDocumentsEntity, (inscriptionDocuments) => inscriptionDocuments.gradeEnrollments)
+    @OneToOne(() => InscriptionDocumentsEntity, (inscriptionDocuments) => inscriptionDocuments.grades)
     @JoinColumn({ name: 'inscription_documents_id' })
     inscriptionDocument: InscriptionDocumentsEntity;
+
+    @OneToOne(() => SemesterEntity, (semester) => semester.grades)
+    @JoinColumn({ name: 'semester_id' })
+    semester: SemesterEntity;
 
     @Column()
     name: string;

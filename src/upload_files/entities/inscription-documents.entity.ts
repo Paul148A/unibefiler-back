@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
-import { GradeEnrollmentEntity } from './grade-enrollment.entity';
+import { GradeEntity } from './grade.entity';
 import { EnrollmentDocEntity } from './enrollment-documents.entity';
 import { RecordEntity } from './record.entity';
 
@@ -13,8 +13,8 @@ export class InscriptionDocumentsEntity {
   @JoinColumn({ name: 'record_id' })
   record: RecordEntity;
 
-  @OneToMany(() => GradeEnrollmentEntity, (gradeEnrollment) => gradeEnrollment.inscriptionDocument)
-  gradeEnrollments: GradeEnrollmentEntity[];
+  @OneToMany(() => GradeEntity, (grade) => grade.inscriptionDocument)
+  grades: GradeEntity[];
 
   @OneToMany(() => EnrollmentDocEntity, (enrollmentDoc) => enrollmentDoc.inscriptionDocument)
   enrollmentDocs: EnrollmentDocEntity[];
