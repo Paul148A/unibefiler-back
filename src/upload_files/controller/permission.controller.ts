@@ -29,7 +29,7 @@ export class PermissionController {
     private readonly usersService: UsersService,
   ) {}
 
-  @Post('upload-permission-document/:recordId')
+  @Post('upload-permission-document/')
   @Roles('teacher')
   @UseInterceptors(PermissionService.getFileUploadInterceptor())
   async uploadPermissionDocument(

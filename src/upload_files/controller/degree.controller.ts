@@ -67,10 +67,10 @@ export class DegreeController {
     if (!user.record) {
       throw new NotFoundException('El usuario no tiene un record asociado');
     }
-    const documents = await this.degreeService.getDegreeDocumentsByRecordId(user.record.id);
+    const document = await this.degreeService.getDegreeDocumentsByRecordId(user.record.id);
     return {
-      message: 'Documentos de grado obtenidos correctamente',
-      data: documents.map((d) => new DegreeResponseDto(d)),
+      message: 'Documento de grado obtenido correctamente',
+      data: document ? new DegreeResponseDto(document) : null,
     };
   }
 
@@ -97,10 +97,10 @@ export class DegreeController {
 
   @Get('record/:id')
   async findDegreeDocumentsByRecordId(@Param('id') id: string) {
-    const documents = await this.degreeService.getDegreeDocumentsByRecordId(id);
+    const document = await this.degreeService.getDegreeDocumentsByRecordId(id);
     return {
-      message: 'Documentos de grado obtenidos correctamente',
-      data: documents,
+      message: 'Documento de grado obtenido correctamente',
+      data: document,
     };
   }
 }

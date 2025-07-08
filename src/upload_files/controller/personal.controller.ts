@@ -71,10 +71,10 @@ export class PersonalController {
     if (!user.record) {
       throw new NotFoundException('El usuario no tiene un record asociado');
     }
-    const documents = await this.personalDocumentsService.getPersonalDocumentsByRecordId(user.record.id);
+    const document = await this.personalDocumentsService.getPersonalDocumentsByRecordId(user.record.id);
     return {
-      message: 'Documentos personales obtenidos correctamente',
-      data: documents.map((d) => new PersonalDocumentsResponseDto(d)),
+      message: 'Documento personal obtenido correctamente',
+      data: document ? new PersonalDocumentsResponseDto(document) : null,
     };
   }
 
@@ -106,10 +106,10 @@ export class PersonalController {
   @Get('record/:id')
   @UseGuards(AuthGuard('jwt-cookie'))
   async getPersonalDocumentsByRecordId(@Param('id') id: string) {
-    const documents = await this.personalDocumentsService.getPersonalDocumentsByRecordId(id);
+    const document = await this.personalDocumentsService.getPersonalDocumentsByRecordId(id);
     return {
-      message: 'Documentos personales obtenidos correctamente',
-      data: documents,
+      message: 'Documento personal obtenido correctamente',
+      data: document,
     };
   }
 }
