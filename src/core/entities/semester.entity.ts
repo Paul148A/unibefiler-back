@@ -7,7 +7,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
-@Entity('career', { schema: 'core' })
+@Entity('semester', { schema: 'core' })
 export class SemesterEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;

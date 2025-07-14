@@ -11,6 +11,8 @@ import { RecordService } from 'src/upload_files/services/record.service';
 import { RecordEntity } from 'src/upload_files/entities/record.entity';
 import { RolesService } from './rol.service';
 import { StatusService } from './status.service';
+import { SemesterService } from 'src/core/services/semester.service';
+import { CareerService } from 'src/core/services/career.service';
 
 
 @Injectable()
@@ -20,7 +22,9 @@ export class UsersService {
         private repository: Repository<UserEntity>,
         private readonly recordService: RecordService,
         private readonly rolesService: RolesService,
-        private readonly statusService: StatusService
+        private readonly statusService: StatusService,
+        private readonly semesterService: SemesterService,
+        private readonly careerService: CareerService,
     ) {
     }
 
@@ -60,16 +64,34 @@ export class UsersService {
             throw new NotFoundException('El status no existe');
         }
 
+        let validateSemester = null;
+        if (payload.semester) {
+            validateSemester = await this.semesterService.findOne(payload.semester);
+            if (!validateSemester) {
+                throw new NotFoundException('El semestre no existe');
+            }
+        }
+
+        let validateCareer = null;
+        if (payload.career) {
+            validateCareer = await this.careerService.findById(payload.career);
+            if (!validateCareer) {
+                throw new NotFoundException('La carrera no existe');
+            }
+        }
+
         const newUser = this.repository.create({
             ...payload,
             role: validateRole,
             status: validateStatus,
+            semester: validateSemester,
+            career: validateCareer,
         });
         return await this.repository.save(newUser);
     }
 
     async findAll(): Promise<ServiceResponseHttpModel> {
-        const relations = { role: true, status: true };
+        const relations = { role: true, status: true, semester: true, career: true };
 
         const response = await this.repository.findAndCount({
             relations,
@@ -83,7 +105,7 @@ export class UsersService {
     async findOne(id: string): Promise<UserEntity> {
         const user = await this.repository.findOne({
             where: { id },
-            relations: { role: true, status: true, record: true },
+            relations: { role: true, status: true, record: true, semester: true, career: true },
             select: { password: false },
         });
 
@@ -142,7 +164,7 @@ export class UsersService {
 
     async findUsersByRole(role: string): Promise<UserEntity[]> {
         const users = await this.repository.find({
-            where: { role: { name: ILike(`%${role}%`) } }, // ILike is case insensitive
+            where: { role: { name: ILike(`%${role}%`) } },
             relations: { role: true, status: true },
         });
 

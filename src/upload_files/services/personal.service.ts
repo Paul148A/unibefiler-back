@@ -19,6 +19,8 @@ import { extname } from 'path';
 import { CreatePersonalDocumentsDto } from '../dto/personal-document/create-personal-document.dto';
 import { UpdatePersonalDocumentsDto } from '../dto/personal-document/update-personal-document.dto';
 import { RecordEntity } from '../entities/record.entity';
+import { DocumentStatusEntity } from '../../core/entities/document-status.entity';
+import { CoreRepositoryEnum } from 'src/core/enums/core-repository-enum';
 
 @Injectable()
 export class PersonalService {
@@ -27,6 +29,8 @@ export class PersonalService {
     private readonly personalDocumentsRepository: Repository<PersonalDocumentsEntity>,
     @Inject(UploadFilesRepositoryEnum.RECORD_REPOSITORY)
     private readonly recordRepository: Repository<RecordEntity>,
+    @Inject(CoreRepositoryEnum.DOCUMENT_STATUS_REPOSITORY)
+    private readonly documentStatusRepository: Repository<DocumentStatusEntity>,
   ) {}
 
   static getFileUploadInterceptor() {
@@ -124,12 +128,7 @@ export class PersonalService {
     if (files.notarizDegreeDoc?.[0])
       updates.notarizDegreeDoc = files.notarizDegreeDoc[0].filename;
 
-    if (Object.keys(updates).length === 0) {
-      throw new BadRequestException(
-        'No se proporcionaron archivos para actualizar',
-      );
-    }
-
+    // Permitir actualizar solo estado aunque no haya archivos
     return updates;
   }
 
@@ -139,16 +138,24 @@ export class PersonalService {
     const record = await this.recordRepository.findOne({
       where: { id: createDto.record_id },
     });
-
     if (!record) {
       throw new NotFoundException(`Record con ID ${createDto.record_id} no encontrado`);
     }
 
+    // Buscar los estados si se proporcionan
+    const pictureDocStatus = createDto.pictureDocStatus ? await this.documentStatusRepository.findOne({ where: { id: createDto.pictureDocStatus } }) : undefined;
+    const dniDocStatus = createDto.dniDocStatus ? await this.documentStatusRepository.findOne({ where: { id: createDto.dniDocStatus } }) : undefined;
+    const votingBallotDocStatus = createDto.votingBallotDocStatus ? await this.documentStatusRepository.findOne({ where: { id: createDto.votingBallotDocStatus } }) : undefined;
+    const notarizDegreeDocStatus = createDto.notarizDegreeDocStatus ? await this.documentStatusRepository.findOne({ where: { id: createDto.notarizDegreeDocStatus } }) : undefined;
+
     const documents = this.personalDocumentsRepository.create({
       ...createDto,
       record: record,
+      pictureDocStatus,
+      dniDocStatus,
+      votingBallotDocStatus,
+      notarizDegreeDocStatus,
     });
-    
     return this.personalDocumentsRepository.save(documents);
   }
 
@@ -165,17 +172,44 @@ export class PersonalService {
       );
     }
 
+    // Buscar los estados si se proporcionan
+    if (updateDto.pictureDocStatus) {
+      documents.pictureDocStatus = await this.documentStatusRepository.findOne({ where: { id: updateDto.pictureDocStatus } });
+    }
+    if (updateDto.dniDocStatus) {
+      documents.dniDocStatus = await this.documentStatusRepository.findOne({ where: { id: updateDto.dniDocStatus } });
+    }
+    if (updateDto.votingBallotDocStatus) {
+      documents.votingBallotDocStatus = await this.documentStatusRepository.findOne({ where: { id: updateDto.votingBallotDocStatus } });
+    }
+    if (updateDto.notarizDegreeDocStatus) {
+      documents.notarizDegreeDocStatus = await this.documentStatusRepository.findOne({ where: { id: updateDto.notarizDegreeDocStatus } });
+    }
+
     Object.assign(documents, updateDto);
     return this.personalDocumentsRepository.save(documents);
   }
 
   async getAllPersonalDocuments(): Promise<PersonalDocumentsEntity[]> {
-    return this.personalDocumentsRepository.find();
+    return this.personalDocumentsRepository.find({
+      relations: [
+        'pictureDocStatus',
+        'dniDocStatus',
+        'votingBallotDocStatus',
+        'notarizDegreeDocStatus',
+      ],
+    });
   }
 
   async getPersonalDocumentsById(id: string): Promise<PersonalDocumentsEntity> {
     const documents = await this.personalDocumentsRepository.findOne({
       where: { id },
+      relations: [
+        'pictureDocStatus',
+        'dniDocStatus',
+        'votingBallotDocStatus',
+        'notarizDegreeDocStatus',
+      ],
     });
     if (!documents) {
       throw new NotFoundException(
@@ -244,18 +278,32 @@ export class PersonalService {
   }
 
    async getPersonalDocumentsByRecordId(recordId: string): Promise<PersonalDocumentsEntity | null> {
-      const record = await this.recordRepository.findOne({
-        where: { id: recordId },
-      });
-  
-      if (!record) {
-        throw new NotFoundException(`Record con ID ${recordId} no encontrado`);
-      }
-  
-      const docs = await this.personalDocumentsRepository.find({
-        where: { record: { id: recordId } },
-      });
-  
-      return docs[0] || null;
+    return this.personalDocumentsRepository.findOne({
+      where: { record: { id: recordId } },
+      relations: [
+        'pictureDocStatus',
+        'dniDocStatus',
+        'votingBallotDocStatus',
+        'notarizDegreeDocStatus',
+      ],
+    });
+  }
+
+  async deleteFile(id: string, field: string): Promise<void> {
+    const validFields = ['pictureDoc', 'dniDoc', 'votingBallotDoc', 'notarizDegreeDoc'];
+    if (!validFields.includes(field)) {
+      throw new BadRequestException('Campo de documento inválido');
     }
+    const doc = await this.personalDocumentsRepository.findOne({ where: { id } });
+    if (!doc) throw new NotFoundException('Documento no encontrado');
+    const filename = doc[field];
+    if (filename) {
+      const filePath = path.join('./uploads/documentos-personales', filename);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+      doc[field] = null;
+      await this.personalDocumentsRepository.save(doc);
+    }
+  }
 }

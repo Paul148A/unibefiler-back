@@ -78,6 +78,12 @@ export class InscriptionController {
     return { message: 'Formulario de inscripción eliminado correctamente' };
   }
 
+  @Delete('delete-file/:id/:field')
+  async deleteFile(@Param('id') id: string, @Param('field') field: string) {
+    await this.inscriptionService.deleteFile(id, field);
+    return { message: 'Archivo eliminado correctamente' };
+  }
+
   @Get('download/:id/:documentType')
   async downloadDocument(
     @Param('id') id: string,
@@ -93,12 +99,11 @@ export class InscriptionController {
     const documents = await this.inscriptionService.getInscriptionDocumentsByRecordId(id);
     return {
       message: 'Documentos de inscripción obtenidos correctamente',
-      data: documents,
+      data: documents ? new InscriptionResponseDto(documents) : null,
     };
   }
 
   @Patch('update-status/:id')
-  @UseGuards(AuthGuard('jwt-cookie'))
   async updateCertificateStatus(
     @Param('id') id: string,
     @Body() updateStatusDto: UpdateStatusDto

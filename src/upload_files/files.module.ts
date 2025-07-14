@@ -14,12 +14,15 @@ import { DatabaseModule } from 'src/database/database.module';
 import { AuthModule } from 'src/auth/auth.module';
 import { GradeController } from './controller/grade.controller';
 import { GradeService } from './services/grade.service';
+import { CoreModule } from 'src/core/core.module';
+import { CoreRepositoryEnum } from 'src/core/enums/core-repository-enum';
 
 @Global()
 @Module({
   imports: [
     DatabaseModule,
-    forwardRef(() => AuthModule)
+    forwardRef(() => AuthModule),
+    CoreModule
   ],
   controllers: [
     PersonalController,

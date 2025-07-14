@@ -30,13 +30,18 @@ export class PersonalController {
   @Post('upload-personal-documents')
   @UseGuards(AuthGuard('jwt-cookie'))
   @UseInterceptors(PersonalService.getFileUploadInterceptor())
-  async uploadPersonalDocuments(@UploadedFiles() files: Express.Multer.File[], @Request() req,) {
+  async uploadPersonalDocuments(@UploadedFiles() files: Express.Multer.File[], @Request() req, @Body() body) {
     const userId = req.user.sub;
     const user = await this.usersService.findOne(userId);
     if (!user.record) {
       throw new NotFoundException('El usuario no tiene un record asociado');
     }
+    // Permitir recibir los estados desde el body
     const createDto = await this.personalDocumentsService.processUploadedFilesForCreate(files, user.record.id);
+    createDto.pictureDocStatus = body.pictureDocStatus;
+    createDto.dniDocStatus = body.dniDocStatus;
+    createDto.votingBallotDocStatus = body.votingBallotDocStatus;
+    createDto.notarizDegreeDocStatus = body.notarizDegreeDocStatus;
     const documents = await this.personalDocumentsService.savePersonalDocuments(createDto);
     return {
       message: 'Documentos personales subidos correctamente',
@@ -49,14 +54,15 @@ export class PersonalController {
   async updatePersonalDocuments(
     @Param('id') id: string,
     @UploadedFiles() files,
+    @Body() body,
   ) {
-    const updateDto =
-      await this.personalDocumentsService.processUploadedFilesForUpdate(files);
-    const updatedDocuments =
-      await this.personalDocumentsService.updatePersonalDocuments(
-        id,
-        updateDto,
-      );
+    const updateDto = await this.personalDocumentsService.processUploadedFilesForUpdate(files);
+    // Permitir recibir los estados desde el body
+    updateDto.pictureDocStatus = body.pictureDocStatus;
+    updateDto.dniDocStatus = body.dniDocStatus;
+    updateDto.votingBallotDocStatus = body.votingBallotDocStatus;
+    updateDto.notarizDegreeDocStatus = body.notarizDegreeDocStatus;
+    const updatedDocuments = await this.personalDocumentsService.updatePersonalDocuments(id, updateDto);
     return {
       message: 'Documentos personales actualizados correctamente',
       data: new PersonalDocumentsResponseDto(updatedDocuments),
@@ -94,6 +100,12 @@ export class PersonalController {
     return { message: 'Documentos personales eliminados correctamente' };
   }
 
+  @Delete('delete-file/:id/:field')
+  async deleteFile(@Param('id') id: string, @Param('field') field: string) {
+    await this.personalDocumentsService.deleteFile(id, field);
+    return { message: 'Archivo eliminado correctamente' };
+  }
+
   @Get('download/:id/:documentType')
   async downloadDocument(
     @Param('id') id: string,
@@ -109,7 +121,7 @@ export class PersonalController {
     const document = await this.personalDocumentsService.getPersonalDocumentsByRecordId(id);
     return {
       message: 'Documento personal obtenido correctamente',
-      data: document,
+      data: document ? new PersonalDocumentsResponseDto(document) : null,
     };
   }
 }
