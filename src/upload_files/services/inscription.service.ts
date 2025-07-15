@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  forwardRef,
 } from '@nestjs/common';
 import { Repository, DeleteResult } from 'typeorm';
 import { InscriptionDocumentsEntity } from '../entities/inscription-documents.entity';
@@ -21,6 +22,8 @@ import { UpdateInscriptionDto } from '../dto/inscription-document/update-inscrip
 import { RecordEntity } from '../entities/record.entity';
 import { DocumentStatusEntity } from '../../core/entities/document-status.entity';
 import { CoreRepositoryEnum } from 'src/core/enums/core-repository-enum';
+import { EmailService } from '../../auth/services/email.service';
+import { UsersService } from '../../auth/services/user.service';
 
 @Injectable()
 export class InscriptionService {
@@ -31,6 +34,9 @@ export class InscriptionService {
     private readonly recordRepository: Repository<RecordEntity>,
     @Inject(CoreRepositoryEnum.DOCUMENT_STATUS_REPOSITORY)
     private readonly documentStatusRepository: Repository<DocumentStatusEntity>,
+    private readonly emailService: EmailService,
+    @Inject(forwardRef(() => UsersService))
+    private readonly usersService: UsersService,
   ) {}
 
   static getFileUploadInterceptor() {
@@ -168,13 +174,13 @@ export class InscriptionService {
   ): Promise<InscriptionDocumentsEntity> {
     const inscription = await this.inscriptionFormRepository.findOne({
       where: { id },
+      relations: ['record', 'record.user'],
     });
     if (!inscription) {
       throw new NotFoundException(
         `Formulario de inscripción con ID ${id} no encontrado`,
       );
     }
-
     if (updateDto.registrationDocStatus) {
       inscription.registrationDocStatus = await this.documentStatusRepository.findOne({ where: { id: updateDto.registrationDocStatus } });
     }
@@ -194,7 +200,45 @@ export class InscriptionService {
       inscription.approvalDocStatus = await this.documentStatusRepository.findOne({ where: { id: updateDto.approvalDocStatus } });
     }
     Object.assign(inscription, updateDto);
-    return this.inscriptionFormRepository.save(inscription);
+    const updated = await this.inscriptionFormRepository.save(inscription);
+
+    // Enviar correo si algún estado es 'rechazado'
+    const statusFields = [
+      'registrationDocStatus',
+      'semesterGradeChartDocStatus',
+      'reEntryDocStatus',
+      'englishCertificateDocStatus',
+      'enrollmentCertificateDocStatus',
+      'approvalDocStatus',
+    ];
+    const documentTypeNames: Record<string, string> = {
+      registrationDocStatus: 'Documento de registro',
+      semesterGradeChartDocStatus: 'Documento de notas',
+      reEntryDocStatus: 'Documento de reingreso',
+      englishCertificateDocStatus: 'Certificado de inglés',
+      enrollmentCertificateDocStatus: 'Certificado de matrícula',
+      approvalDocStatus: 'Documento de aprobación',
+    };
+    for (const field of statusFields) {
+      let status = inscription[field];
+      if (status && typeof status === 'string') {
+        const statusObj = await this.documentStatusRepository.findOne({ where: { id: status } });
+        status = statusObj;
+      }
+      if (status && status.name && status.name.toLowerCase() === 'rechazado') {
+        const user = inscription.record?.user;
+        if (user && user.email) {
+          const userName = `${user.names} ${user.last_names}`;
+          const documentTypeFriendly = documentTypeNames[field] || field;
+          const reason = 'Por favor, revise que la documentacion sea la correcta y vuelva a subirlo.';
+          await this.emailService.sendRejectionEmail(user.email, userName, documentTypeFriendly, reason);
+          // Eliminar archivo después de enviar el correo
+          const docField = field.replace('Status', '');
+          await this.deleteFileIfRejected(inscription, docField);
+        }
+      }
+    }
+    return updated;
   }
 
   async getAllInscriptionForms(): Promise<InscriptionDocumentsEntity[]> {
@@ -305,6 +349,8 @@ export class InscriptionService {
         'englishCertificateDocStatus',
         'enrollmentCertificateDocStatus',
         'approvalDocStatus',
+        'record',
+        'record.user',
       ],
     });
 
@@ -329,6 +375,21 @@ export class InscriptionService {
     }
     inscription[updateStatusDto.field] = statusEntity;
     await this.inscriptionFormRepository.save(inscription);
+
+    // Lógica de envío de correo si el estado es rechazado
+    let status = statusEntity;
+    if (status && status.name && status.name.toLowerCase() === 'rechazado') {
+      const user = inscription.record?.user;
+      if (user && user.email) {
+        const userName = `${user.names} ${user.last_names}`;
+        const documentType = updateStatusDto.field;
+        const reason = 'Su documento fue rechazado. Por favor, revise que la documentacion sea la correcta y vuelva a subirlo.';
+        await this.emailService.sendRejectionEmail(user.email, userName, documentType, reason);
+        // Eliminar archivo después de enviar el correo
+        const docField = updateStatusDto.field.replace('Status', '');
+        await this.deleteFileIfRejected(inscription, docField);
+      }
+    }
     return inscription;
   }
 
@@ -367,6 +428,19 @@ export class InscriptionService {
       }
       doc[field] = null;
       await this.inscriptionFormRepository.save(doc);
+    }
+  }
+
+  // Método privado para eliminar archivo si el estado es rechazado
+  private async deleteFileIfRejected(inscription: InscriptionDocumentsEntity, field: string) {
+    const filename = inscription[field];
+    if (filename) {
+      const filePath = path.join('./uploads/documentos-inscripcion', filename);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+      inscription[field] = null;
+      await this.inscriptionFormRepository.save(inscription);
     }
   }
 }

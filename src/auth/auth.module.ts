@@ -16,6 +16,7 @@ import { RolesService } from "./services/rol.service";
 import { StatusService } from "./services/status.service";
 import { RolesController } from "./controllers/rol.controller";
 import { StatusController } from "./controllers/status.controller";
+import { EmailService } from './services/email.service';
 
 
 @Global()
@@ -30,8 +31,8 @@ import { StatusController } from "./controllers/status.controller";
         }),
     ],
     controllers: [AuthController, UsersController, RolesController, StatusController],
-    providers: [...authProviders, AuthService, UsersService, JwtStrategy, JwtService, JwtCookieStrategy, RolesService, StatusService],
-    exports: [AuthService, UsersService, JwtStrategy, JwtService, RolesService, StatusService],
+    providers: [...authProviders, AuthService, UsersService, JwtStrategy, JwtService, JwtCookieStrategy, RolesService, StatusService, EmailService],
+    exports: [AuthService, UsersService, JwtStrategy, JwtService, RolesService, StatusService, EmailService],
 })
 
 export class AuthModule {

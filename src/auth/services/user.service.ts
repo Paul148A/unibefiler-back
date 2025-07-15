@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
 import { ILike, Repository } from 'typeorm';
 import { AuthRepositoryEnum } from '../enums/repository.enum';
 import { UserEntity } from '../entities';
@@ -20,6 +20,7 @@ export class UsersService {
     constructor(
         @Inject(AuthRepositoryEnum.USER_REPOSITORY)
         private repository: Repository<UserEntity>,
+        @Inject(forwardRef(() => RecordService))
         private readonly recordService: RecordService,
         private readonly rolesService: RolesService,
         private readonly statusService: StatusService,

@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  forwardRef,
 } from '@nestjs/common';
 import { Repository, DeleteResult } from 'typeorm';
 import { PersonalDocumentsEntity } from '../entities/personal-documents.entity';
@@ -21,6 +22,8 @@ import { UpdatePersonalDocumentsDto } from '../dto/personal-document/update-pers
 import { RecordEntity } from '../entities/record.entity';
 import { DocumentStatusEntity } from '../../core/entities/document-status.entity';
 import { CoreRepositoryEnum } from 'src/core/enums/core-repository-enum';
+import { EmailService } from '../../auth/services/email.service';
+import { UsersService } from '../../auth/services/user.service';
 
 @Injectable()
 export class PersonalService {
@@ -31,6 +34,9 @@ export class PersonalService {
     private readonly recordRepository: Repository<RecordEntity>,
     @Inject(CoreRepositoryEnum.DOCUMENT_STATUS_REPOSITORY)
     private readonly documentStatusRepository: Repository<DocumentStatusEntity>,
+    private readonly emailService: EmailService,
+    @Inject(forwardRef(() => UsersService))
+    private readonly usersService: UsersService,
   ) {}
 
   static getFileUploadInterceptor() {
@@ -127,8 +133,6 @@ export class PersonalService {
       updates.votingBallotDoc = files.votingBallotDoc[0].filename;
     if (files.notarizDegreeDoc?.[0])
       updates.notarizDegreeDoc = files.notarizDegreeDoc[0].filename;
-
-    // Permitir actualizar solo estado aunque no haya archivos
     return updates;
   }
 
@@ -142,7 +146,6 @@ export class PersonalService {
       throw new NotFoundException(`Record con ID ${createDto.record_id} no encontrado`);
     }
 
-    // Buscar los estados si se proporcionan
     const pictureDocStatus = createDto.pictureDocStatus ? await this.documentStatusRepository.findOne({ where: { id: createDto.pictureDocStatus } }) : undefined;
     const dniDocStatus = createDto.dniDocStatus ? await this.documentStatusRepository.findOne({ where: { id: createDto.dniDocStatus } }) : undefined;
     const votingBallotDocStatus = createDto.votingBallotDocStatus ? await this.documentStatusRepository.findOne({ where: { id: createDto.votingBallotDocStatus } }) : undefined;
@@ -165,14 +168,13 @@ export class PersonalService {
   ): Promise<PersonalDocumentsEntity> {
     const documents = await this.personalDocumentsRepository.findOne({
       where: { id },
+      relations: ['record', 'record.user'],
     });
     if (!documents) {
       throw new NotFoundException(
         `Documentos personales con ID ${id} no encontrados`,
       );
     }
-
-    // Buscar los estados si se proporcionan
     if (updateDto.pictureDocStatus) {
       documents.pictureDocStatus = await this.documentStatusRepository.findOne({ where: { id: updateDto.pictureDocStatus } });
     }
@@ -185,9 +187,42 @@ export class PersonalService {
     if (updateDto.notarizDegreeDocStatus) {
       documents.notarizDegreeDocStatus = await this.documentStatusRepository.findOne({ where: { id: updateDto.notarizDegreeDocStatus } });
     }
-
     Object.assign(documents, updateDto);
-    return this.personalDocumentsRepository.save(documents);
+    const updated = await this.personalDocumentsRepository.save(documents);
+
+    // Enviar correo si algún estado es 'rechazado'
+    const statusFields = [
+      'pictureDocStatus',
+      'dniDocStatus',
+      'votingBallotDocStatus',
+      'notarizDegreeDocStatus',
+    ];
+    const documentTypeNames: Record<string, string> = {
+      pictureDocStatus: 'Foto de tamaño carnet',
+      dniDocStatus: 'Copia de cédula',
+      votingBallotDocStatus: 'Papeleta de votación',
+      notarizDegreeDocStatus: 'Título notarizado',
+    };
+    for (const field of statusFields) {
+      let status = documents[field];
+      if (status && typeof status === 'string') {
+        const statusObj = await this.documentStatusRepository.findOne({ where: { id: status } });
+        status = statusObj;
+      }
+      if (status && status.name && status.name.toLowerCase() === 'rechazado') {
+        const user = documents.record?.user;
+        if (user && user.email) {
+          const userName = `${user.names} ${user.last_names}`;
+          const documentTypeFriendly = documentTypeNames[field] || field;
+          const reason = 'Por favor, revise que la documentacion sea la correcta y vuelva a subirlo.';
+          await this.emailService.sendRejectionEmail(user.email, userName, documentTypeFriendly, reason);
+          // Eliminar archivo después de enviar el correo
+          const docField = field.replace('Status', '');
+          await this.deleteFileIfRejected(documents, docField);
+        }
+      } 
+    }
+    return updated;
   }
 
   async getAllPersonalDocuments(): Promise<PersonalDocumentsEntity[]> {
@@ -304,6 +339,19 @@ export class PersonalService {
       }
       doc[field] = null;
       await this.personalDocumentsRepository.save(doc);
+    }
+  }
+
+  // Método privado para eliminar archivo si el estado es rechazado
+  private async deleteFileIfRejected(documents: PersonalDocumentsEntity, field: string) {
+    const filename = documents[field];
+    if (filename) {
+      const filePath = path.join('./uploads/documentos-personales', filename);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+      documents[field] = null;
+      await this.personalDocumentsRepository.save(documents);
     }
   }
 }
