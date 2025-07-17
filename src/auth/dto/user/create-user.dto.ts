@@ -13,4 +13,8 @@ export class CreateUserDto {
     readonly email: string;
 
     readonly password: string;
+
+    readonly career?: string;
+
+    readonly semester?: string;
 }

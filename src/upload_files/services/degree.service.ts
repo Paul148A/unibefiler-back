@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  forwardRef,
 } from '@nestjs/common';
 import { Repository, DeleteResult } from 'typeorm';
 import { DegreeDocumentsEntity } from '../entities/degree-documents.entity';
@@ -19,6 +20,11 @@ import { extname } from 'path';
 import { CreateDegreeDto } from '../dto/degree-document/create-degree.dto';
 import { UpdateDegreeDto } from '../dto/degree-document/update-degree.dto';
 import { RecordEntity } from '../entities/record.entity';
+import { DocumentStatusEntity } from '../../core/entities/document-status.entity';
+import { CoreRepositoryEnum } from 'src/core/enums/core-repository-enum';
+import { UpdateDegreeStatusDto } from '../dto/degree-document/update-degree.dto';
+import { EmailService } from '../../auth/services/email.service';
+import { UsersService } from '../../auth/services/user.service';
 
 @Injectable()
 export class DegreeService {
@@ -27,6 +33,11 @@ export class DegreeService {
     private readonly degreeRepository: Repository<DegreeDocumentsEntity>,
     @Inject(UploadFilesRepositoryEnum.RECORD_REPOSITORY)
     private readonly recordRepository: Repository<RecordEntity>,
+    @Inject(CoreRepositoryEnum.DOCUMENT_STATUS_REPOSITORY)
+    private readonly documentStatusRepository: Repository<DocumentStatusEntity>,
+    private readonly emailService: EmailService,
+    @Inject(forwardRef(() => UsersService))
+    private readonly usersService: UsersService,
   ) {}
 
   static getFileUploadInterceptor() {
@@ -147,10 +158,26 @@ export class DegreeService {
     if (!record) {
       throw new NotFoundException(`Record con ID ${createDto.record_id} no encontrado`);
     }
-
+    // Buscar los estados si se proporcionan
+    const topicComplainDocStatus = createDto.topicComplainDocStatus ? await this.documentStatusRepository.findOne({ where: { id: createDto.topicComplainDocStatus } }) : undefined;
+    const topicApprovalDocStatus = createDto.topicApprovalDocStatus ? await this.documentStatusRepository.findOne({ where: { id: createDto.topicApprovalDocStatus } }) : undefined;
+    const tutorAssignmentDocStatus = createDto.tutorAssignmentDocStatus ? await this.documentStatusRepository.findOne({ where: { id: createDto.tutorAssignmentDocStatus } }) : undefined;
+    const tutorFormatDocStatus = createDto.tutorFormatDocStatus ? await this.documentStatusRepository.findOne({ where: { id: createDto.tutorFormatDocStatus } }) : undefined;
+    const antiplagiarismDocStatus = createDto.antiplagiarismDocStatus ? await this.documentStatusRepository.findOne({ where: { id: createDto.antiplagiarismDocStatus } }) : undefined;
+    const tutorLetterStatus = createDto.tutorLetterStatus ? await this.documentStatusRepository.findOne({ where: { id: createDto.tutorLetterStatus } }) : undefined;
+    const electiveGradeStatus = createDto.electiveGradeStatus ? await this.documentStatusRepository.findOne({ where: { id: createDto.electiveGradeStatus } }) : undefined;
+    const academicClearanceStatus = createDto.academicClearanceStatus ? await this.documentStatusRepository.findOne({ where: { id: createDto.academicClearanceStatus } }) : undefined;
     const degree = this.degreeRepository.create({
       ...createDto,
       record: record,
+      topicComplainDocStatus,
+      topicApprovalDocStatus,
+      tutorAssignmentDocStatus,
+      tutorFormatDocStatus,
+      antiplagiarismDocStatus,
+      tutorLetterStatus,
+      electiveGradeStatus,
+      academicClearanceStatus,
     });
     
     return this.degreeRepository.save(degree);
@@ -169,13 +196,97 @@ export class DegreeService {
       );
     }
 
+    if (updateDto.topicComplainDocStatus) {
+      degree.topicComplainDocStatus = await this.documentStatusRepository.findOne({ where: { id: updateDto.topicComplainDocStatus } });
+    }
+    if (updateDto.topicApprovalDocStatus) {
+      degree.topicApprovalDocStatus = await this.documentStatusRepository.findOne({ where: { id: updateDto.topicApprovalDocStatus } });
+    }
+    if (updateDto.tutorAssignmentDocStatus) {
+      degree.tutorAssignmentDocStatus = await this.documentStatusRepository.findOne({ where: { id: updateDto.tutorAssignmentDocStatus } });
+    }
+    if (updateDto.tutorFormatDocStatus) {
+      degree.tutorFormatDocStatus = await this.documentStatusRepository.findOne({ where: { id: updateDto.tutorFormatDocStatus } });
+    }
+    if (updateDto.antiplagiarismDocStatus) {
+      degree.antiplagiarismDocStatus = await this.documentStatusRepository.findOne({ where: { id: updateDto.antiplagiarismDocStatus } });
+    }
+    if (updateDto.tutorLetterStatus) {
+      degree.tutorLetterStatus = await this.documentStatusRepository.findOne({ where: { id: updateDto.tutorLetterStatus } });
+    }
+    if (updateDto.electiveGradeStatus) {
+      degree.electiveGradeStatus = await this.documentStatusRepository.findOne({ where: { id: updateDto.electiveGradeStatus } });
+    }
+    if (updateDto.academicClearanceStatus) {
+      degree.academicClearanceStatus = await this.documentStatusRepository.findOne({ where: { id: updateDto.academicClearanceStatus } });
+    }
     Object.assign(degree, updateDto);
     return this.degreeRepository.save(degree);
+  }
+
+  async updateDegreeStatus(id: string, dto: UpdateDegreeStatusDto): Promise<DegreeDocumentsEntity> {
+    const degree = await this.degreeRepository.findOne({ where: { id }, relations: ['record', 'record.user'] });
+    if (!degree) throw new NotFoundException('Documento de grado no encontrado');
+    const validFields = [
+      'topicComplainDocStatus',
+      'topicApprovalDocStatus',
+      'tutorAssignmentDocStatus',
+      'tutorFormatDocStatus',
+      'antiplagiarismDocStatus',
+      'tutorLetterStatus',
+      'electiveGradeStatus',
+      'academicClearanceStatus',
+    ];
+    if (!validFields.includes(dto.field)) {
+      throw new BadRequestException('Campo de estado inválido');
+    }
+    degree[dto.field] = dto.statusId;
+    await this.degreeRepository.save(degree);
+
+    // Enviar correo si algún estado es 'rechazado'
+    const documentTypeNames: Record<string, string> = {
+      topicComplainDocStatus: 'Solicitud de tema de tesis',
+      topicApprovalDocStatus: 'Aprobación de tema de tesis',
+      tutorAssignmentDocStatus: 'Asignación de tutor',
+      tutorFormatDocStatus: 'Formato de tutoría',
+      antiplagiarismDocStatus: 'Documento de antiplagio',
+      tutorLetterStatus: 'Carta de tutor',
+      electiveGradeStatus: 'Nota de grado electivo',
+      academicClearanceStatus: 'Documento de libre de deuda',
+    };
+    const status = degree[dto.field];
+    let statusObj = status;
+    if (status && typeof status === 'string') {
+      statusObj = await this.documentStatusRepository.findOne({ where: { id: status } });
+    }
+    if (statusObj && statusObj.name && statusObj.name.toLowerCase() === 'rechazado') {
+      const user = degree.record?.user;
+      if (user && user.email) {
+        const userName = `${user.names} ${user.last_names}`;
+        const documentTypeFriendly = documentTypeNames[dto.field] || dto.field;
+        const reason = 'Por favor, revise que la documentacion sea la correcta y vuelva a subirlo.';
+        await this.emailService.sendRejectionEmail(user.email, userName, documentTypeFriendly, reason);
+        // Eliminar archivo después de enviar el correo
+        const docField = dto.field.replace('Status', '');
+        await this.deleteFileIfRejected(degree, docField);
+      }
+    }
+    return degree;
   }
 
   async getDegreeById(id: string): Promise<DegreeDocumentsEntity> {
     const degree = await this.degreeRepository.findOne({
       where: { id },
+      relations: [
+        'topicComplainDocStatus',
+        'topicApprovalDocStatus',
+        'tutorAssignmentDocStatus',
+        'tutorFormatDocStatus',
+        'antiplagiarismDocStatus',
+        'tutorLetterStatus',
+        'electiveGradeStatus',
+        'academicClearanceStatus',
+      ],
     });
     if (!degree) {
       throw new NotFoundException(
@@ -237,7 +348,6 @@ export class DegreeService {
       elective_grade: 'electiveGrade',
       academic_clearance: 'academicClearance',
     };
-
     if (!mapping[documentType]) {
       throw new NotFoundException(
         `Tipo de documento ${documentType} no válido`,
@@ -248,10 +358,58 @@ export class DegreeService {
   }
 
   async getDegreeDocumentsByRecordId(recordId: string): Promise<DegreeDocumentsEntity | null> {
-    const docs = await this.degreeRepository.find({
+    return this.degreeRepository.findOne({
       where: { record: { id: recordId } },
-      relations: ['record']
+      relations: [
+        'topicComplainDocStatus',
+        'topicApprovalDocStatus',
+        'tutorAssignmentDocStatus',
+        'tutorFormatDocStatus',
+        'antiplagiarismDocStatus',
+        'tutorLetterStatus',
+        'electiveGradeStatus',
+        'academicClearanceStatus',
+      ],
     });
-    return docs[0] || null;
+  }
+
+  async deleteFile(id: string, field: string): Promise<void> {
+    const validFields = [
+      'topicComplainDoc',
+      'topicApprovalDoc',
+      'tutorAssignmentDoc',
+      'tutorFormatDoc',
+      'antiplagiarismDoc',
+      'tutorLetter',
+      'electiveGrade',
+      'academicClearance',
+    ];
+    if (!validFields.includes(field)) {
+      throw new BadRequestException('Campo de documento inválido');
+    }
+    const doc = await this.degreeRepository.findOne({ where: { id } });
+    if (!doc) throw new NotFoundException('Documento no encontrado');
+    const filename = doc[field];
+    if (filename) {
+      const filePath = path.join('./uploads/documentos-grado', filename);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+      doc[field] = null;
+      await this.degreeRepository.save(doc);
+    }
+  }
+
+  // Método privado para eliminar archivo si el estado es rechazado
+  private async deleteFileIfRejected(degree: DegreeDocumentsEntity, field: string) {
+    const filename = degree[field];
+    if (filename) {
+      const filePath = path.join('./uploads/documentos-grado', filename);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+      degree[field] = null;
+      await this.degreeRepository.save(degree);
+    }
   }
 }

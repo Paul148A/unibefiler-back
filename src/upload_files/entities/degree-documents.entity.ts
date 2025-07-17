@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { RecordEntity } from './record.entity';
+import { DocumentStatusEntity } from '../../core/entities/document-status.entity';
 
 @Entity('degree_documents', { schema: 'upload_files' })
 export class DegreeDocumentsEntity {
@@ -8,8 +9,8 @@ export class DegreeDocumentsEntity {
 
   /** Foreign keys */
   @ManyToOne(() => RecordEntity, (record) => record.degreeDocuments)
-    @JoinColumn({ name: 'record_id' })
-    record: RecordEntity;
+  @JoinColumn({ name: 'record_id' })
+  record: RecordEntity;
 
   @Column({ 
     type: 'varchar',
@@ -18,6 +19,9 @@ export class DegreeDocumentsEntity {
     nullable: true,
    })
   topicComplainDoc: string;
+  @ManyToOne(() => DocumentStatusEntity)
+  @JoinColumn({ name: 'topic_complain_doc_status_id' })
+  topicComplainDocStatus: DocumentStatusEntity;
 
   @Column({ 
     type: 'varchar',
@@ -26,6 +30,9 @@ export class DegreeDocumentsEntity {
     nullable: true, 
   })
   topicApprovalDoc: string;
+  @ManyToOne(() => DocumentStatusEntity)
+  @JoinColumn({ name: 'topic_approval_doc_status_id' })
+  topicApprovalDocStatus: DocumentStatusEntity;
 
   @Column({ 
     type: 'varchar',
@@ -34,6 +41,9 @@ export class DegreeDocumentsEntity {
     nullable: true, 
    })
   tutorAssignmentDoc: string;
+  @ManyToOne(() => DocumentStatusEntity)
+  @JoinColumn({ name: 'tutor_assignment_doc_status_id' })
+  tutorAssignmentDocStatus: DocumentStatusEntity;
 
   @Column({ 
     type: 'varchar',
@@ -42,6 +52,9 @@ export class DegreeDocumentsEntity {
     nullable: true, 
    })
   tutorFormatDoc: string;
+  @ManyToOne(() => DocumentStatusEntity)
+  @JoinColumn({ name: 'tutor_format_doc_status_id' })
+  tutorFormatDocStatus: DocumentStatusEntity;
 
   @Column({ 
     type: 'varchar',
@@ -50,6 +63,9 @@ export class DegreeDocumentsEntity {
     nullable: true,
    })
   antiplagiarismDoc: string;
+  @ManyToOne(() => DocumentStatusEntity)
+  @JoinColumn({ name: 'antiplagiarism_doc_status_id' })
+  antiplagiarismDocStatus: DocumentStatusEntity;
 
   @Column({ 
     type: 'varchar',
@@ -58,6 +74,9 @@ export class DegreeDocumentsEntity {
     nullable: true,
    })
   tutorLetter: string;
+  @ManyToOne(() => DocumentStatusEntity)
+  @JoinColumn({ name: 'tutor_letter_status_id' })
+  tutorLetterStatus: DocumentStatusEntity;
 
   @Column({ 
     type: 'varchar',
@@ -66,6 +85,9 @@ export class DegreeDocumentsEntity {
     nullable: true,
    })
   electiveGrade: string;
+  @ManyToOne(() => DocumentStatusEntity)
+  @JoinColumn({ name: 'elective_grade_status_id' })
+  electiveGradeStatus: DocumentStatusEntity;
 
   @Column({ 
     type: 'varchar',
@@ -74,4 +96,22 @@ export class DegreeDocumentsEntity {
     nullable: true,
    })
   academicClearance: string;
+  @ManyToOne(() => DocumentStatusEntity)
+  @JoinColumn({ name: 'academic_clearance_status_id' })
+  academicClearanceStatus: DocumentStatusEntity;
+
+  @CreateDateColumn({
+    name: 'created_at',
+    type: 'timestamp',
+    comment: 'Fecha y hora de subida del documento',
+  })
+  createdAt: Date;
+
+  @UpdateDateColumn({
+    name: 'updated_at',
+    type: 'timestamp',
+    comment: 'Fecha y hora de última actualización del documento',
+    nullable: true,
+  })
+  updatedAt: Date;
 }

@@ -34,9 +34,10 @@ export class PermissionController {
   @UseInterceptors(PermissionService.getFileUploadInterceptor())
   async uploadPermissionDocument(
     @UploadedFile() file: Express.Multer.File,
-    @Param('recordId') recordId: string,
+    @Body() body: any,
     @Request() req,
   ) {
+    const recordId = body.recordId;
     const createDto = await this.permissionDocumentsService.processUploadedFileForCreate(
       file,
       recordId

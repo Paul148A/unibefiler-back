@@ -1,3 +1,4 @@
 export class UpdateStatusDto {
-  status: 'approved' | 'rejected' | 'pending';
+  field: string;
+  statusId: string;
 } 

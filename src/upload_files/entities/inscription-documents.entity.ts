@@ -1,7 +1,8 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { GradeEntity } from './grade.entity';
 import { RecordEntity } from './record.entity';
 import { EnrollmentEntity } from './enrollment.entity';
+import { DocumentStatusEntity } from '../../core/entities/document-status.entity';
 
 @Entity('inscription_documents', { schema: 'upload_files' })
 export class InscriptionDocumentsEntity {
@@ -26,6 +27,9 @@ export class InscriptionDocumentsEntity {
     comment: 'Documento de registro',
   })
   registrationDoc: string;
+  @ManyToOne(() => DocumentStatusEntity)
+  @JoinColumn({ name: 'registration_doc_status_id' })
+  registrationDocStatus: DocumentStatusEntity;
 
   @Column({
     type: 'varchar',
@@ -34,6 +38,9 @@ export class InscriptionDocumentsEntity {
     nullable: true,
   })
   semesterGradeChartDoc: string;
+  @ManyToOne(() => DocumentStatusEntity)
+  @JoinColumn({ name: 'semester_grade_chart_doc_status_id' })
+  semesterGradeChartDocStatus: DocumentStatusEntity;
 
   @Column({
     type: 'varchar',
@@ -42,6 +49,9 @@ export class InscriptionDocumentsEntity {
     nullable: true,
   })
   reEntryDoc: string;
+  @ManyToOne(() => DocumentStatusEntity)
+  @JoinColumn({ name: 're_entry_doc_status_id' })
+  reEntryDocStatus: DocumentStatusEntity;
 
   @Column({
     type: 'varchar',
@@ -50,17 +60,10 @@ export class InscriptionDocumentsEntity {
     nullable: true,
   })
   englishCertificateDoc: string;
+  @ManyToOne(() => DocumentStatusEntity)
+  @JoinColumn({ name: 'english_certificate_doc_status_id' })
+  englishCertificateDocStatus: DocumentStatusEntity;
 
-  @Column({
-    type: 'enum',
-    enum: ['approved', 'rejected', 'pending'],
-    name: 'english_certificate_status',
-    comment: 'Estado del certificado de inglés',
-    nullable: true,
-    default: 'pending'
-  })
-  englishCertificateStatus: 'approved' | 'rejected' | 'pending';
-  
   @Column({
     type: 'varchar',
     name: 'enrollment_certificate_doc',
@@ -68,6 +71,9 @@ export class InscriptionDocumentsEntity {
     nullable: true,
   })
   enrollmentCertificateDoc: string;
+  @ManyToOne(() => DocumentStatusEntity)
+  @JoinColumn({ name: 'enrollment_certificate_doc_status_id' })
+  enrollmentCertificateDocStatus: DocumentStatusEntity;
 
   @Column({
     type: 'varchar',
@@ -76,5 +82,22 @@ export class InscriptionDocumentsEntity {
     nullable: true,
   })
   approvalDoc: string;
+  @ManyToOne(() => DocumentStatusEntity)
+  @JoinColumn({ name: 'approval_doc_status_id' })
+  approvalDocStatus: DocumentStatusEntity;
 
+  @CreateDateColumn({
+    name: 'created_at',
+    type: 'timestamp',
+    comment: 'Fecha y hora de subida del documento',
+  })
+  createdAt: Date;
+
+  @UpdateDateColumn({
+    name: 'updated_at',
+    type: 'timestamp',
+    comment: 'Fecha y hora de última actualización del documento',
+    nullable: true,
+  })
+  updatedAt: Date;
 }

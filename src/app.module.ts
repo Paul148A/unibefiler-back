@@ -21,6 +21,8 @@ import { CoreModule } from './core/core.module';
         DB_PASSWORD: Joi.string().required(),
         DB_PORT: Joi.number().required(),
         DB_USER: Joi.string().required(),
+        EMAIL_USER: Joi.string().email().required(),
+        EMAIL_PASS: Joi.string().required(),
       }),
     }),
 

@@ -1,9 +1,9 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { RecordEntity } from './record.entity';
+import { DocumentStatusEntity } from '../../core/entities/document-status.entity';
 
 @Entity('personal_documents', { schema: 'upload_files' })
 export class PersonalDocumentsEntity {
-
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -21,6 +21,10 @@ export class PersonalDocumentsEntity {
    })
   pictureDoc: string;
 
+  @ManyToOne(() => DocumentStatusEntity)
+  @JoinColumn({ name: 'picture_doc_status_id' })
+  pictureDocStatus: DocumentStatusEntity;
+
   @Column({
     type: 'varchar',
     name: 'dni_doc',
@@ -28,6 +32,10 @@ export class PersonalDocumentsEntity {
     nullable: true,
   })
   dniDoc: string;
+
+  @ManyToOne(() => DocumentStatusEntity)
+  @JoinColumn({ name: 'dni_doc_status_id' })
+  dniDocStatus: DocumentStatusEntity;
 
   @Column({
     type: 'varchar',
@@ -37,6 +45,10 @@ export class PersonalDocumentsEntity {
   })
   votingBallotDoc: string;
 
+  @ManyToOne(() => DocumentStatusEntity)
+  @JoinColumn({ name: 'voting_ballot_doc_status_id' })
+  votingBallotDocStatus: DocumentStatusEntity;
+
   @Column({
     type: 'varchar',
     name: 'notariz_degree_doc',
@@ -44,4 +56,23 @@ export class PersonalDocumentsEntity {
     nullable: true,
   })
   notarizDegreeDoc: string;
+
+  @ManyToOne(() => DocumentStatusEntity)
+  @JoinColumn({ name: 'notariz_degree_doc_status_id' })
+  notarizDegreeDocStatus: DocumentStatusEntity;
+
+  @CreateDateColumn({
+    name: 'created_at',
+    type: 'timestamp',
+    comment: 'Fecha y hora de subida del documento',
+  })
+  createdAt: Date;
+
+  @UpdateDateColumn({
+    name: 'updated_at',
+    type: 'timestamp',
+    comment: 'Fecha y hora de última actualización del documento',
+    nullable: true,
+  })
+  updatedAt: Date;
 }

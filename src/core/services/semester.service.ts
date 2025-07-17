@@ -17,4 +17,11 @@ export class SemesterService {
     async findById(id: string): Promise<SemesterEntity> {
         return this.gradeRepository.findOne({ where: { id } });
     }
+
+    async findOne(id: string): Promise<SemesterEntity> {
+        const role = await this.gradeRepository.findOne({
+          where: { id },
+        });
+        return role;
+      }
 }
