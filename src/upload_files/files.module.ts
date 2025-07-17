@@ -14,6 +14,8 @@ import { DatabaseModule } from 'src/database/database.module';
 import { AuthModule } from 'src/auth/auth.module';
 import { GradeController } from './controller/grade.controller';
 import { GradeService } from './services/grade.service';
+import { EnrollmentController } from './controller/enrollment.controller';
+import { EnrollmentService } from './services/enrollment.service';
 
 @Global()
 @Module({
@@ -27,7 +29,8 @@ import { GradeService } from './services/grade.service';
     DegreeController,
     RecordController,
     PermissionController,
-    GradeController
+    GradeController,
+    EnrollmentController
   ],
   providers: [
     ...uploadFilesProviders,
@@ -36,7 +39,8 @@ import { GradeService } from './services/grade.service';
     DegreeService,
     RecordService,
     PermissionService,
-    GradeService
+    GradeService,
+    EnrollmentService
   ],
   exports: [
     PersonalService,
@@ -45,6 +49,7 @@ import { GradeService } from './services/grade.service';
     RecordService,
     PermissionService,
     GradeService,
+    EnrollmentService
   ]
 })
 export class FilesModule { }

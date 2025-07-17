@@ -15,18 +15,28 @@ export class GradeEntity {
     id: string;
 
     /** Foreign keys */
-    @OneToOne(() => InscriptionDocumentsEntity, (inscriptionDocuments) => inscriptionDocuments.grades)
+    @ManyToOne(() => InscriptionDocumentsEntity, (inscriptionDocuments) => inscriptionDocuments.grades)
     @JoinColumn({ name: 'inscription_documents_id' })
     inscriptionDocument: InscriptionDocumentsEntity;
 
-    @OneToOne(() => SemesterEntity, (semester) => semester.grades)
+    @ManyToOne(() => SemesterEntity, (semester) => semester.grades)
     @JoinColumn({ name: 'semester_id' })
     semester: SemesterEntity;
 
-    @Column()
+    @Column({ 
+    type: 'varchar',
+    name: 'name',
+    comment: 'Nombre del documento de notas',
+    nullable: true,
+   })
     name: string;
 
-    @Column()
+    @Column({ 
+    type: 'varchar',
+    name: 'description',
+    comment: 'Descripcion del documeno de notas',
+    nullable: true,
+   })
     description: string;
 
 }

@@ -1,4 +1,5 @@
 import { UserEntity } from 'src/auth/entities';
+import { EnrollmentEntity } from 'src/upload_files/entities/enrollment.entity';
 import { GradeEntity } from 'src/upload_files/entities/grade.entity';
 import {
   Column,
@@ -7,7 +8,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
-@Entity('career', { schema: 'core' })
+@Entity('semester', { schema: 'core' })
 export class SemesterEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -18,6 +19,9 @@ export class SemesterEntity {
 
   @OneToMany(() => GradeEntity, (grade) => grade.semester)
   grades: GradeEntity[];
+
+  @OneToMany(() => EnrollmentEntity, (enrollment) => enrollment.semester)
+  enrollments: EnrollmentEntity[];
 
   /** Columns **/
   @Column({

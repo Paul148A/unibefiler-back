@@ -1,7 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
 import { GradeEntity } from './grade.entity';
-import { EnrollmentDocEntity } from './enrollment-documents.entity';
 import { RecordEntity } from './record.entity';
+import { EnrollmentEntity } from './enrollment.entity';
 
 @Entity('inscription_documents', { schema: 'upload_files' })
 export class InscriptionDocumentsEntity {
@@ -16,8 +16,8 @@ export class InscriptionDocumentsEntity {
   @OneToMany(() => GradeEntity, (grade) => grade.inscriptionDocument)
   grades: GradeEntity[];
 
-  @OneToMany(() => EnrollmentDocEntity, (enrollmentDoc) => enrollmentDoc.inscriptionDocument)
-  enrollmentDocs: EnrollmentDocEntity[];
+  @OneToMany(() => EnrollmentEntity, (enrollment) => enrollment.inscriptionDocument)
+  enrollments: EnrollmentEntity[];
 
   @Column({
     nullable: true,
