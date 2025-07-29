@@ -8,6 +8,9 @@ import { SemesterService } from "src/core/services/semester.service";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { diskStorage } from "multer";
 import { extname } from "path";
+import { Response } from 'express';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class EnrollmentService {
@@ -82,10 +85,37 @@ export class EnrollmentService {
             relations: ['inscriptionDocument', 'semester'],
         });
 
-        if (!enrollments || enrollments.length === 0) {
-            throw new NotFoundException(`No se encontraron documentos de inscripción para el ID ${inscriptionDocumentId}`);
+        return enrollments || [];
+    }
+
+    async downloadDocument(
+        id: string,
+        res: Response,
+    ): Promise<void> {
+        const enrollment = await this.enrollmentRepository.findOne({
+            where: { id },
+        });
+        
+        if (!enrollment) {
+            throw new NotFoundException(
+                `Documento de matrícula con ID ${id} no encontrado`,
+            );
         }
 
-        return enrollments;
+        const filename = enrollment.name;
+        if (!filename) {
+            throw new NotFoundException(`Documento no encontrado`);
+        }
+
+        const filePath = path.join('./uploads/documentos-matriculas', filename);
+        if (!fs.existsSync(filePath)) {
+            throw new NotFoundException(
+                `Archivo ${filename} no encontrado en el servidor`,
+            );
+        }
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+        fs.createReadStream(filePath).pipe(res);
     }
 }

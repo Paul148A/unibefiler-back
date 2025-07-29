@@ -36,7 +36,6 @@ export class UsersService {
             throw new NotFoundException('No se pudo crear el usuario');
         }
 
-        // Solo crear record y documentos si el rol es "student" o "Estudiante"
         const roleName = user.role.name.toLowerCase();
         const roleDescription = user.role.description.toLowerCase();
         

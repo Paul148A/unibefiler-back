@@ -38,9 +38,11 @@ export class PermissionController {
     @Request() req,
   ) {
     const recordId = body.recordId;
+    const description = body.description;
     const createDto = await this.permissionDocumentsService.processUploadedFileForCreate(
       file,
-      recordId
+      recordId,
+      description
     );
     const document = await this.permissionDocumentsService.savePermissionDocuments(createDto);
     return {
@@ -55,9 +57,11 @@ export class PermissionController {
   async updatePermissionDocument(
     @Param('id') id: string,
     @UploadedFile() file: Express.Multer.File,
+    @Body() body: any,
   ) {
     const updateDto: any = {};
     if (file) updateDto.supportingDoc = file.filename;
+    if (body.description) updateDto.description = body.description;
     const updatedDocument = await this.permissionDocumentsService.updatePermissionDocuments(
       id,
       updateDto,
@@ -96,7 +100,7 @@ export class PermissionController {
   }
 
   @Get('download/:id')
-  @Roles('teacher')
+  @Roles('teacher', 'admin')
   async downloadDocument(
     @Param('id') id: string,
     @Res() res: Response,
@@ -105,7 +109,7 @@ export class PermissionController {
   }
 
   @Get('record/:id')
-  @Roles('teacher')
+  @Roles('teacher', 'admin')
   async getPermissionDocumentsByRecordId(@Param('id') id: string) {
     const documents = await this.permissionDocumentsService.getPermissionDocumentsByRecordId(id);
     return {

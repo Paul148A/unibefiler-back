@@ -146,7 +146,6 @@ export class InscriptionService {
       throw new NotFoundException(`Record con ID ${createDto.record_id} no encontrado`);
     }
 
-    // Buscar los estados si se proporcionan
     const registrationDocStatus = createDto.registrationDocStatus ? await this.documentStatusRepository.findOne({ where: { id: createDto.registrationDocStatus } }) : undefined;
     const semesterGradeChartDocStatus = createDto.semesterGradeChartDocStatus ? await this.documentStatusRepository.findOne({ where: { id: createDto.semesterGradeChartDocStatus } }) : undefined;
     const reEntryDocStatus = createDto.reEntryDocStatus ? await this.documentStatusRepository.findOne({ where: { id: createDto.reEntryDocStatus } }) : undefined;
@@ -202,7 +201,6 @@ export class InscriptionService {
     Object.assign(inscription, updateDto);
     const updated = await this.inscriptionFormRepository.save(inscription);
 
-    // Enviar correo si algún estado es 'rechazado'
     const statusFields = [
       'registrationDocStatus',
       'semesterGradeChartDocStatus',
@@ -232,7 +230,6 @@ export class InscriptionService {
           const documentTypeFriendly = documentTypeNames[field] || field;
           const reason = 'Por favor, revise que la documentacion sea la correcta y vuelva a subirlo.';
           await this.emailService.sendRejectionEmail(user.email, userName, documentTypeFriendly, reason);
-          // Eliminar archivo después de enviar el correo
           const docField = field.replace('Status', '');
           await this.deleteFileIfRejected(inscription, docField);
         }
@@ -376,7 +373,6 @@ export class InscriptionService {
     inscription[updateStatusDto.field] = statusEntity;
     await this.inscriptionFormRepository.save(inscription);
 
-    // Lógica de envío de correo si el estado es rechazado
     let status = statusEntity;
     if (status && status.name && status.name.toLowerCase() === 'rechazado') {
       const user = inscription.record?.user;
@@ -385,7 +381,6 @@ export class InscriptionService {
         const documentType = updateStatusDto.field;
         const reason = 'Su documento fue rechazado. Por favor, revise que la documentacion sea la correcta y vuelva a subirlo.';
         await this.emailService.sendRejectionEmail(user.email, userName, documentType, reason);
-        // Eliminar archivo después de enviar el correo
         const docField = updateStatusDto.field.replace('Status', '');
         await this.deleteFileIfRejected(inscription, docField);
       }
@@ -431,7 +426,6 @@ export class InscriptionService {
     }
   }
 
-  // Método privado para eliminar archivo si el estado es rechazado
   private async deleteFileIfRejected(inscription: InscriptionDocumentsEntity, field: string) {
     const filename = inscription[field];
     if (filename) {

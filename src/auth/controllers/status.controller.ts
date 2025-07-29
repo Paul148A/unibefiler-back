@@ -47,42 +47,4 @@ export class StatusController {
     };
   }
 
-//   @ApiOperation({ summary: 'Update Role' })
-//   @Put(':id')
-//   @HttpCode(HttpStatus.CREATED)
-//   async update(@Param('id', ParseUUIDPipe) id: string, @Body() payload: UpdateRoleDto): Promise<ResponseHttpModel> {
-//     const serviceResponse = await this.statusService.update(id, payload);
-
-//     return {
-//       data: serviceResponse,
-//       message: `Rol actualizado`,
-//       title: `Updated`,
-//     };
-//   }
-  
-//   @ApiOperation({ summary: 'Delete Role' })
-//   @Delete(':id')
-//   @HttpCode(HttpStatus.CREATED)
-//   async remove(@Param('id', ParseUUIDPipe) id: string): Promise<ResponseHttpModel> {
-//     const serviceResponse = await this.statusService.remove(id);
-
-//     return {
-//       data: serviceResponse,
-//       message: `Rol eliminado`,
-//       title: `Deleted`,
-//     };
-//   }
-
-//   @ApiOperation({ summary: 'Delete Multiple Roles' })
-//   @Patch('remove-all')
-//   @HttpCode(HttpStatus.CREATED)
-//   async removeAll(@Body() payload: RoleEntity[]): Promise<ResponseHttpModel> {
-//     const serviceResponse = await this.statusService.removeAll(payload);
-
-//     return {
-//       data: serviceResponse,
-//       message: `Roles eliminados`,
-//       title: `Deleted`,
-//     };
-//   }
 }

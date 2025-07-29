@@ -1,9 +1,11 @@
-import { Body, Controller, Get, Param, Post, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, UploadedFile, UseGuards, UseInterceptors, Res } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import { RolesGuard } from "src/auth/custom-role-guard/roles.guard";
 import { EnrollmentService } from "../services/enrollment.service";
 import { CreateEnrollmentDto } from "../dto/enrollment/create-enrollment.dto";
 import { ResponseHttpModel } from "src/auth/models/response-http.model";
+import { Response } from 'express';
+import { Roles } from "src/auth/custom-role-guard/roles.decorator";
 
 @Controller('api1/enrollment')
 @UseGuards(AuthGuard('jwt-cookie'), RolesGuard)
@@ -33,5 +35,14 @@ export class EnrollmentController {
             message: 'Documentos de inscripción obtenidos correctamente',
             data: enrollments,
         };
+    }
+
+    @Get('download/:id')
+    @Roles('admin')
+    async downloadDocument(
+        @Param('id') id: string,
+        @Res() res: Response,
+    ) {
+        await this.enrollmentService.downloadDocument(id, res);
     }
 }

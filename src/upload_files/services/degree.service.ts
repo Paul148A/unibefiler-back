@@ -158,7 +158,6 @@ export class DegreeService {
     if (!record) {
       throw new NotFoundException(`Record con ID ${createDto.record_id} no encontrado`);
     }
-    // Buscar los estados si se proporcionan
     const topicComplainDocStatus = createDto.topicComplainDocStatus ? await this.documentStatusRepository.findOne({ where: { id: createDto.topicComplainDocStatus } }) : undefined;
     const topicApprovalDocStatus = createDto.topicApprovalDocStatus ? await this.documentStatusRepository.findOne({ where: { id: createDto.topicApprovalDocStatus } }) : undefined;
     const tutorAssignmentDocStatus = createDto.tutorAssignmentDocStatus ? await this.documentStatusRepository.findOne({ where: { id: createDto.tutorAssignmentDocStatus } }) : undefined;
@@ -243,7 +242,6 @@ export class DegreeService {
     degree[dto.field] = dto.statusId;
     await this.degreeRepository.save(degree);
 
-    // Enviar correo si algún estado es 'rechazado'
     const documentTypeNames: Record<string, string> = {
       topicComplainDocStatus: 'Solicitud de tema de tesis',
       topicApprovalDocStatus: 'Aprobación de tema de tesis',
@@ -266,7 +264,6 @@ export class DegreeService {
         const documentTypeFriendly = documentTypeNames[dto.field] || dto.field;
         const reason = 'Por favor, revise que la documentacion sea la correcta y vuelva a subirlo.';
         await this.emailService.sendRejectionEmail(user.email, userName, documentTypeFriendly, reason);
-        // Eliminar archivo después de enviar el correo
         const docField = dto.field.replace('Status', '');
         await this.deleteFileIfRejected(degree, docField);
       }
@@ -400,7 +397,6 @@ export class DegreeService {
     }
   }
 
-  // Método privado para eliminar archivo si el estado es rechazado
   private async deleteFileIfRejected(degree: DegreeDocumentsEntity, field: string) {
     const filename = degree[field];
     if (filename) {

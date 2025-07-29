@@ -190,7 +190,6 @@ export class PersonalService {
     Object.assign(documents, updateDto);
     const updated = await this.personalDocumentsRepository.save(documents);
 
-    // Enviar correo si algún estado es 'rechazado'
     const statusFields = [
       'pictureDocStatus',
       'dniDocStatus',
@@ -216,7 +215,6 @@ export class PersonalService {
           const documentTypeFriendly = documentTypeNames[field] || field;
           const reason = 'Por favor, revise que la documentacion sea la correcta y vuelva a subirlo.';
           await this.emailService.sendRejectionEmail(user.email, userName, documentTypeFriendly, reason);
-          // Eliminar archivo después de enviar el correo
           const docField = field.replace('Status', '');
           await this.deleteFileIfRejected(documents, docField);
         }
@@ -342,7 +340,6 @@ export class PersonalService {
     }
   }
 
-  // Método privado para eliminar archivo si el estado es rechazado
   private async deleteFileIfRejected(documents: PersonalDocumentsEntity, field: string) {
     const filename = documents[field];
     if (filename) {

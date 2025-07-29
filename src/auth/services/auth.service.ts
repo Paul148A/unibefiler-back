@@ -7,7 +7,6 @@ import { LoginDto } from "../dto/login/login.dto";
 import { JwtService } from "./jwt.service";
 import { Response } from 'express';
 import { RecordService } from "src/upload_files/services/record.service";
-// import { RecordService } from "../../upload-files/services/record.service";
 
 @Injectable()
 export class AuthService {
@@ -22,25 +21,20 @@ export class AuthService {
 
     async register(payload: any): Promise<ServiceResponseHttpModel> {
         try {
-            // 1. Verificar si el usuario ya existe
             const existingUser = await this.repository.findOne({
                 where: { identification: payload.identification }
             });
             if (existingUser) {
                 throw new BadRequestException('El usuario ya existe');
             }
-            // 2. Crear el usuario
             const user = new UserEntity();
             Object.assign(user, payload);
             const createdUser = await this.repository.save(user);
-
-            // 3. Cargar el usuario con las relaciones para verificar el rol
             const userWithRole = await this.repository.findOne({
                 where: { id: createdUser.id },
                 relations: { role: true }
             });
 
-            // 4. Crear automáticamente el record asociado solo si es estudiante
             let record = null;
             if (userWithRole) {
                 const roleName = userWithRole.role.name.toLowerCase();
@@ -52,9 +46,7 @@ export class AuthService {
                 }
             }
 
-            // 5. Retornar respuesta sin password
             const { password, ...userData } = userWithRole || createdUser;
-
             return {
                 data: {
                     user: userData,

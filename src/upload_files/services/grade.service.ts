@@ -8,6 +8,9 @@ import { FileInterceptor } from "@nestjs/platform-express";
 import { diskStorage } from "multer";
 import { extname } from "path";
 import { InscriptionService } from "./inscription.service";
+import { Response } from 'express';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class GradeService {
@@ -76,10 +79,39 @@ export class GradeService {
       relations: ['inscriptionDocument', 'semester'],
     });
 
-    if (!grades || grades.length === 0) {
-      throw new NotFoundException(`No se encontraron notas para el documento de inscripción con ID ${inscriptionDocumentId}`);
+    return grades || [];
+  }
+
+  async downloadDocument(
+    id: string,
+    res: Response,
+  ): Promise<void> {
+    const grade = await this.gradeRepository.findOne({
+      where: { id },
+    });
+    
+    if (!grade) {
+      throw new NotFoundException(
+        `Documento de notas con ID ${id} no encontrado`,
+      );
     }
 
-    return grades;
+    const filename = grade.name;
+    
+    if (!filename) {
+      throw new NotFoundException(`Documento no encontrado`);
+    }
+
+    const filePath = path.join('./uploads/documentos-notas', filename);
+    
+    if (!fs.existsSync(filePath)) {
+      throw new NotFoundException(
+        `Archivo ${filename} no encontrado en el servidor`,
+      );
+    }
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+    fs.createReadStream(filePath).pipe(res);
   }
 }

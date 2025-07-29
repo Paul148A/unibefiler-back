@@ -45,7 +45,6 @@ export class AuthController {
                 });
             }
 
-            // Maneja otros errores
             return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
                 message: 'Ocurrió un error en el servidor',
                 error: 'Internal Server Error',
@@ -75,59 +74,4 @@ export class AuthController {
             },
         };
     }
-
-    // @ApiOperation({summary: 'Change Password'})
-    // @Auth()
-    // @Put(':id/change-password')
-    // @HttpCode(HttpStatus.CREATED)
-    // async changePassword(@Param('id', ParseUUIDPipe) id: string, @Body() payload: PasswordChangeDto): Promise<ResponseHttpModel> {
-    //     const serviceResponse = await this.authService.changePassword(id, payload);
-
-    //     return {
-    //         data: serviceResponse,
-    //         message: 'La contraseña fue cambiada',
-    //         title: 'Contraseña Actualizada',
-    //     };
-    // }
-
-    // @ApiOperation({summary: 'Find User Information'})
-    // @Auth()
-    // @Get('user-information')
-    // @HttpCode(HttpStatus.OK)
-    // async findUserInformation(@User() user: UserEntity): Promise<ResponseHttpModel> {
-    //     const serviceResponse = await this.authService.findUserInformation(user.id);
-
-    //     return {
-    //         data: serviceResponse,
-    //         message: 'La información del usuario fue actualizada',
-    //         title: 'Atualizado',
-    //     };
-    // }
-
-    // @ApiOperation({summary: 'Refresh Token'})
-    // @Auth()
-    // @Get('refresh-token')
-    // @HttpCode(HttpStatus.CREATED)
-    // refreshToken(@User() user: UserEntity) {
-    //     const serviceResponse = this.authService.refreshToken(user);
-
-    //     return {
-    //         data: serviceResponse.data,
-    //         message: 'Correct Access',
-    //         title: 'Refresh Token',
-    //     };
-    // }
-
-
-    // @Patch('reset-passwords')
-    // @HttpCode(HttpStatus.OK)
-    // async resetPassword(@Body() payload: any): Promise<ResponseHttpModel> {
-    //     await this.authService.resetPassword(payload);
-
-    //     return {
-    //         data: null,
-    //         message: `Por favor inicie sesión`,
-    //         title: 'Contraseña Reseteada',
-    //     };
-    // }
 }

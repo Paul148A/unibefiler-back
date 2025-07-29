@@ -36,7 +36,6 @@ export class PersonalController {
     if (!user.record) {
       throw new NotFoundException('El usuario no tiene un record asociado');
     }
-    // Permitir recibir los estados desde el body
     const createDto = await this.personalDocumentsService.processUploadedFilesForCreate(files, user.record.id);
     createDto.pictureDocStatus = body.pictureDocStatus;
     createDto.dniDocStatus = body.dniDocStatus;
@@ -57,7 +56,6 @@ export class PersonalController {
     @Body() body,
   ) {
     const updateDto = await this.personalDocumentsService.processUploadedFilesForUpdate(files);
-    // Permitir recibir los estados desde el body
     updateDto.pictureDocStatus = body.pictureDocStatus;
     updateDto.dniDocStatus = body.dniDocStatus;
     updateDto.votingBallotDocStatus = body.votingBallotDocStatus;

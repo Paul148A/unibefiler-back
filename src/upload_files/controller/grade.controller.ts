@@ -1,9 +1,10 @@
 import { CreateGradeDto } from '../dto/grade/create-grade.dto';
-import { Body, Controller, Get, Param, Post, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, UploadedFile, UseGuards, UseInterceptors, Res } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import { RolesGuard } from "src/auth/custom-role-guard/roles.guard";
 import { GradeService } from "../services/grade.service";
 import { Roles } from "src/auth/custom-role-guard/roles.decorator";
+import { Response } from 'express';
 
 @Controller('api1/grade')
 @UseGuards(AuthGuard('jwt-cookie'), RolesGuard)
@@ -17,7 +18,7 @@ export class GradeController {
     @UseInterceptors(GradeService.getFileUploadInterceptor())
     async uploadGradeDocument(@UploadedFile() file: Express.Multer.File, @Body() grade: CreateGradeDto
     ) {
-      file.filename = grade.name;
+      grade.name = file.filename;
       const createGradeEnrollment = await this.gradeService.Create(grade);
       return {
         message: 'Documento de respaldo subido correctamente',
@@ -33,5 +34,14 @@ export class GradeController {
       message: 'Documentos de notas obtenidos correctamente',
       data: grades,
     };
+  }
+
+  @Get('download/:id')
+  @Roles('admin')
+  async downloadDocument(
+    @Param('id') id: string,
+    @Res() res: Response,
+  ) {
+    await this.gradeService.downloadDocument(id, res);
   }
 }

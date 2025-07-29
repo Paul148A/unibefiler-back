@@ -1,4 +1,3 @@
-// import { getDegreeDocumentsByRecordId } from '../../../../unibe-filer-front/src/services/upload-files/degree-documents.service';
 import {
   Controller,
   Post,

@@ -21,6 +21,14 @@ export class PermissionDocumentsEntity {
   })
   supportingDoc: string;
 
+  @Column({
+    type: 'varchar',
+    name: 'description',
+    comment: 'Descripción del documento de permiso',
+    nullable: true,
+  })
+  description: string;
+
   @CreateDateColumn({
     name: 'created_at',
     type: 'timestamp',

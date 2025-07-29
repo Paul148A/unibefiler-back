@@ -52,6 +52,7 @@ export class PermissionService {
   async processUploadedFileForCreate(
     file: Express.Multer.File,
     record_id: string,
+    description?: string,
   ): Promise<CreatePermissionDocumentsDto> {
     if (!file) {
       throw new BadRequestException('Debes subir un archivo');
@@ -68,6 +69,7 @@ export class PermissionService {
     return {
       record_id,
       supportingDoc: file.filename,
+      description,
     };
   }
 
