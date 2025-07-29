@@ -179,4 +179,23 @@ export class UsersService {
 
         return users;
     }
+    
+    async updateStatus(id: string, statusId: string): Promise<UserEntity> {
+        const user = await this.repository.findOne({
+            where: { id },
+            relations: { role: true, status: true, semester: true, career: true },
+        });
+
+        if (!user) {
+            throw new NotFoundException('Usuario no encontrado');
+        }
+
+        const status = await this.statusService.findOne(statusId);
+        if (!status) {
+            throw new NotFoundException('Estado no encontrado');
+        }
+
+        user.status = status;
+        return await this.repository.save(user);
+    }
 }

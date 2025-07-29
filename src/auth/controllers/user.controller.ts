@@ -128,4 +128,17 @@ export class UsersController {
       title: `Usuarios encontrados`,
     };
   }
+
+  @ApiOperation({ summary: 'Update User Status' })
+  @Patch(':id/status')
+  @HttpCode(HttpStatus.OK)
+  async updateStatus(@Param('id', ParseUUIDPipe) id: string, @Body() payload: { status: string }): Promise<ResponseHttpModel> {
+    const serviceResponse = await this.usersService.updateStatus(id, payload.status);
+
+    return {
+      data: serviceResponse,
+      message: `Estado del usuario actualizado`,
+      title: `Estado actualizado`,
+    };
+  }
 }
