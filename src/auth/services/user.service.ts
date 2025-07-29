@@ -164,9 +164,13 @@ export class UsersService {
     }
 
     async findUsersByRole(role: string): Promise<UserEntity[]> {
+        if (!role) {
+            throw new NotFoundException('El rol no existe: ' + role);
+        }
+
         const users = await this.repository.find({
             where: { role: { name: ILike(`%${role}%`) } },
-            relations: { role: true, status: true },
+            relations: { role: true, status: true, semester: true, career: true },
         });
 
         if (!users) {

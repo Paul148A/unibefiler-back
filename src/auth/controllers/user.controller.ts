@@ -115,4 +115,17 @@ export class UsersController {
       title: `Usuario encontrado`,
     };
   }
+
+  @ApiOperation({ summary: 'Find By Role' })
+  @Get('role/:role')
+  @HttpCode(HttpStatus.OK)
+  async findByRole(@Param('role') role: string): Promise<ResponseHttpModel> {
+    const serviceResponse = await this.usersService.findUsersByRole(role);
+
+    return {
+      data: serviceResponse,
+      message: `Usuarios encontrados con el rol ${role}`,
+      title: `Usuarios encontrados`,
+    };
+  }
 }
