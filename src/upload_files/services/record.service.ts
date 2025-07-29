@@ -94,7 +94,7 @@ export class RecordService {
   }
 
   async getAllRecords(): Promise<ServiceResponseHttpModel> {
-    const relations = { user: true };
+    const relations = { user: { career: true } };
 
         const response = await this.recordRepository.findAndCount({
             relations,
@@ -106,7 +106,7 @@ export class RecordService {
   }
 
   async getRecordsByUserId(userId: string): Promise<RecordEntity[]> {
-    const relations = { user: true };
+    const relations = { user: { career: true } };
     const records = await this.recordRepository.find({
       where: { user: { id: userId } },
       relations,
@@ -130,7 +130,7 @@ export class RecordService {
   }
 
   async getRecordsByUserDni(dni: string): Promise<ServiceResponseHttpModel> {
-    const relations = { user: true };
+    const relations = { user: { career: true } };
     const response = await this.recordRepository.findAndCount({
       where: {
         user: {
@@ -146,7 +146,7 @@ export class RecordService {
   }
 
   async getRecordsByUserName(name: string): Promise<ServiceResponseHttpModel> {
-    const relations = { user: true };
+    const relations = { user: { career: true } };
     const response = await this.recordRepository.findAndCount({
       where: [
         {
