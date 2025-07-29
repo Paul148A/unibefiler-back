@@ -45,10 +45,6 @@ export class UserEntity {
     type: 'varchar',
     name: 'names',
     comment: 'nombre del usuario',
-    transformer: {
-      to: (value: string) => value ? value.toUpperCase() : value,
-      from: (value: string) => value
-    }
   })
   names: string;
 
@@ -56,10 +52,6 @@ export class UserEntity {
     type: 'varchar',
     name: 'last_names',
     comment: 'Apellidos del usuario',
-    transformer: {
-      to: (value: string) => value ? value.toUpperCase() : value,
-      from: (value: string) => value
-    }
   })
   last_names: string;
   
