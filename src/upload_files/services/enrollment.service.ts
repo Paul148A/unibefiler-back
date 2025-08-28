@@ -27,8 +27,18 @@ export class EnrollmentService {
                 filename: (req, file, callback) => {
                     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
                     const ext = extname(file.originalname);
-                    const filename = `${uniqueSuffix}${ext}`;
-                    callback(null, filename);
+                    const tempFileName = `${uniqueSuffix}${ext}`;
+                    
+                    if (!req['tempFileInfo']) {
+                        req['tempFileInfo'] = {};
+                    }
+                    req['tempFileInfo'][file.fieldname] = {
+                        originalName: file.originalname,
+                        fieldName: file.fieldname,
+                        tempFileName: tempFileName
+                    };
+                    
+                    callback(null, tempFileName);
                 },
             }),
             fileFilter: (req, file, callback) => {

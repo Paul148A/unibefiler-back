@@ -18,6 +18,9 @@ import { EnrollmentController } from './controller/enrollment.controller';
 import { EnrollmentService } from './services/enrollment.service';
 import { CoreModule } from 'src/core/core.module';
 import { CoreRepositoryEnum } from 'src/core/enums/core-repository-enum';
+import { UserFolderService } from './services/user-folder.service';
+import { BaseDocumentService } from './services/base-document.service';
+import { FileNamingService } from './services/file-naming.service';
 
 @Global()
 @Module({
@@ -43,7 +46,10 @@ import { CoreRepositoryEnum } from 'src/core/enums/core-repository-enum';
     RecordService,
     PermissionService,
     GradeService,
-    EnrollmentService
+    EnrollmentService,
+    UserFolderService,
+    BaseDocumentService,
+    FileNamingService
   ],
   exports: [
     PersonalService,
@@ -52,7 +58,8 @@ import { CoreRepositoryEnum } from 'src/core/enums/core-repository-enum';
     RecordService,
     PermissionService,
     GradeService,
-    EnrollmentService
+    EnrollmentService,
+    FileNamingService
   ]
 })
 export class FilesModule { }

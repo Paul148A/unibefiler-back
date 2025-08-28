@@ -27,39 +27,51 @@ export class PersonalController {
     private readonly usersService: UsersService,
   ) {}
 
-  @Post('upload-personal-documents')
+
+
+  @Put('update-personal-documents/:id')
   @UseGuards(AuthGuard('jwt-cookie'))
-  @UseInterceptors(PersonalService.getFileUploadInterceptor())
-  async uploadPersonalDocuments(@UploadedFiles() files: Express.Multer.File[], @Request() req, @Body() body) {
+  @UseInterceptors(PersonalService.getFileFieldsInterceptor())
+  async updatePersonalDocuments(
+    @Param('id') id: string,
+    @Request() req,
+    @UploadedFiles() files: {
+      pictureDoc?: Express.Multer.File[];
+      dniDoc?: Express.Multer.File[];
+      votingBallotDoc?: Express.Multer.File[];
+      notarizDegreeDoc?: Express.Multer.File[];
+    },
+    @Body() body,
+  ) {
+    
     const userId = req.user.sub;
     const user = await this.usersService.findOne(userId);
     if (!user.record) {
       throw new NotFoundException('El usuario no tiene un record asociado');
     }
-    const createDto = await this.personalDocumentsService.processUploadedFilesForCreate(files, user.record.id);
-    createDto.pictureDocStatus = body.pictureDocStatus;
-    createDto.dniDocStatus = body.dniDocStatus;
-    createDto.votingBallotDocStatus = body.votingBallotDocStatus;
-    createDto.notarizDegreeDocStatus = body.notarizDegreeDocStatus;
-    const documents = await this.personalDocumentsService.savePersonalDocuments(createDto);
-    return {
-      message: 'Documentos personales subidos correctamente',
-      data: new PersonalDocumentsResponseDto(documents),
-    };
-  }
-
-  @Put('update-personal-documents/:id')
-  @UseInterceptors(PersonalService.getFileFieldsInterceptor())
-  async updatePersonalDocuments(
-    @Param('id') id: string,
-    @UploadedFiles() files,
-    @Body() body,
-  ) {
-    const updateDto = await this.personalDocumentsService.processUploadedFilesForUpdate(files);
-    updateDto.pictureDocStatus = body.pictureDocStatus;
-    updateDto.dniDocStatus = body.dniDocStatus;
-    updateDto.votingBallotDocStatus = body.votingBallotDocStatus;
-    updateDto.notarizDegreeDocStatus = body.notarizDegreeDocStatus;
+    
+    const userFolderService = new (await import('../services/user-folder.service')).UserFolderService();
+    userFolderService.createUserFolderStructure(user.identification);
+    
+    let updateDto: any = {};
+    if (files) {
+      updateDto = await this.personalDocumentsService.processUploadedFilesForUpdate(files);
+      
+      if (Object.keys(updateDto).length > 0) {
+        try {
+          await this.moveFilesToUserFolder(files, user.identification, updateDto);
+        } catch (error) {
+          console.error('❌ Error moviendo archivos:', error);
+          throw new Error(`Error moviendo archivos: ${error.message}`);
+        }
+      }
+    }
+    
+    if (body.pictureDocStatus) updateDto.pictureDocStatus = body.pictureDocStatus;
+    if (body.dniDocStatus) updateDto.dniDocStatus = body.dniDocStatus;
+    if (body.votingBallotDocStatus) updateDto.votingBallotDocStatus = body.votingBallotDocStatus;
+    if (body.notarizDegreeDocStatus) updateDto.notarizDegreeDocStatus = body.notarizDegreeDocStatus;
+    
     const updatedDocuments = await this.personalDocumentsService.updatePersonalDocuments(id, updateDto);
     return {
       message: 'Documentos personales actualizados correctamente',
@@ -121,5 +133,67 @@ export class PersonalController {
       message: 'Documento personal obtenido correctamente',
       data: document ? new PersonalDocumentsResponseDto(document) : null,
     };
+  }
+
+  @Get('test-auth')
+  @UseGuards(AuthGuard('jwt-cookie'))
+  async testAuth(@Request() req) {
+    return {
+      message: 'Autenticación exitosa',
+      user: req.user,
+      cookies: req.cookies
+    };
+  }
+
+  private async moveFilesToUserFolder(
+    files: any,
+    userIdentification: string,
+    updateDto: any
+  ): Promise<void> {
+    const fs = require('fs');
+    const path = require('path');
+    
+    const tempFolder = path.join(process.cwd(), 'uploads', 'temp');
+    const userFolder = path.join(process.cwd(), 'uploads', 'documentos-personales', userIdentification);
+    
+    if (!fs.existsSync(tempFolder)) {
+      console.error(`Carpeta temporal no existe: ${tempFolder}`);
+      throw new Error(`Carpeta temporal no existe: ${tempFolder}`);
+    }
+    
+    if (!fs.existsSync(userFolder)) {
+      fs.mkdirSync(userFolder, { recursive: true });
+    }
+    
+    for (const field of Object.keys(updateDto)) {
+      if (updateDto[field] && typeof updateDto[field] === 'string') {
+        const tempFilePath = path.join(tempFolder, updateDto[field]);
+        
+        if (fs.existsSync(tempFilePath)) {
+          try {
+            const fileNamingService = new (await import('../services/file-naming.service')).FileNamingService();
+            const standardFileName = fileNamingService.generateStandardFileName(
+              field,
+              userIdentification,
+              files[field]?.[0]?.originalname
+            );
+      
+            const ext = path.extname(updateDto[field]);
+            const finalFileName = `${standardFileName}${ext}`;
+            const userFilePath = path.join(userFolder, finalFileName);
+            
+            fs.renameSync(tempFilePath, userFilePath);
+            updateDto[field] = finalFileName;
+            
+          } catch (error) {
+            console.error(`Error moviendo archivo ${tempFilePath}:`, error);
+            throw new Error(`Error moviendo archivo ${updateDto[field]}: ${error.message}`);
+          }
+        } else {
+          console.error(`Archivo temporal no encontrado: ${tempFilePath}`);
+          throw new Error(`Archivo temporal no encontrado: ${updateDto[field]}`);
+        }
+      }
+    }
   }
 }

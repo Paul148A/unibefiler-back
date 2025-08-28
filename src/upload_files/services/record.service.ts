@@ -60,7 +60,7 @@ export class RecordService {
     };
 
     await Promise.all([
-      this.personalService.savePersonalDocuments(personalDto),
+      this.personalService.createInitialPersonalDocuments(savedRecord.id),
       this.inscriptionService.saveInscriptionForm(inscriptionDto),
       this.degreeService.saveDegree(degreeDto)
     ]);

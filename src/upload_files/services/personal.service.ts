@@ -13,17 +13,16 @@ import * as fs from 'fs';
 import * as path from 'path';
 import {
   FileFieldsInterceptor,
-  FilesInterceptor,
 } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
-import { CreatePersonalDocumentsDto } from '../dto/personal-document/create-personal-document.dto';
 import { UpdatePersonalDocumentsDto } from '../dto/personal-document/update-personal-document.dto';
 import { RecordEntity } from '../entities/record.entity';
 import { DocumentStatusEntity } from '../../core/entities/document-status.entity';
 import { CoreRepositoryEnum } from 'src/core/enums/core-repository-enum';
 import { EmailService } from '../../auth/services/email.service';
 import { UsersService } from '../../auth/services/user.service';
+import { UserFolderService } from './user-folder.service';
 
 @Injectable()
 export class PersonalService {
@@ -37,30 +36,20 @@ export class PersonalService {
     private readonly emailService: EmailService,
     @Inject(forwardRef(() => UsersService))
     private readonly usersService: UsersService,
+    private readonly userFolderService: UserFolderService,
   ) {}
 
-  static getFileUploadInterceptor() {
-    return FilesInterceptor('files', 4, {
-      storage: diskStorage({
-        destination: './uploads/documentos-personales',
-        filename: (req, file, callback) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-          const ext = extname(file.originalname);
-          const filename = `${uniqueSuffix}${ext}`;
-          callback(null, filename);
-        },
-      }),
-      fileFilter: (req, file, callback) => {
-        if (file.mimetype === 'application/pdf') {
-          callback(null, true);
-        } else {
-          callback(new Error('Solo se permiten archivos PDF'), false);
-        }
-      },
-    });
-  }
+
 
   static getFileFieldsInterceptor() {
+    const fs = require('fs');
+    const path = require('path');
+    const tempPath = path.join(process.cwd(), 'uploads', 'temp');
+    
+    if (!fs.existsSync(tempPath)) {
+      fs.mkdirSync(tempPath, { recursive: true });
+    }
+
     return FileFieldsInterceptor(
       [
         { name: 'pictureDoc', maxCount: 1 },
@@ -70,12 +59,24 @@ export class PersonalService {
       ],
       {
         storage: diskStorage({
-          destination: './uploads/documentos-personales',
+          destination: (req, file, callback) => {
+            callback(null, tempPath);
+          },
           filename: (req, file, callback) => {
             const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
             const ext = extname(file.originalname);
-            const filename = `${uniqueSuffix}${ext}`;
-            callback(null, filename);
+            const tempFileName = `${uniqueSuffix}${ext}`;
+            
+            if (!req['tempFileInfo']) {
+              req['tempFileInfo'] = {};
+            }
+            req['tempFileInfo'][file.fieldname] = {
+              originalName: file.originalname,
+              fieldName: file.fieldname,
+              tempFileName: tempFileName
+            };
+            
+            callback(null, tempFileName);
           },
         }),
         fileFilter: (req, file, callback) => {
@@ -89,34 +90,7 @@ export class PersonalService {
     );
   }
 
-  async processUploadedFilesForCreate(
-    files: Express.Multer.File[],
-    record_id: string,
-  ): Promise<CreatePersonalDocumentsDto> {
-    if (!files || files.length !== 4) {
-      throw new BadRequestException('Debes subir exactamente 4 archivos');
-    }
 
-    const record = await this.recordRepository.findOne({
-      where: { id: record_id },
-    });
-
-    if (!record) {
-      throw new NotFoundException(`Record con ID ${record_id} no encontrado`);
-    }
-
-    const [pictureDoc, dniDoc, votingBallotDoc, notarizDegreeDoc] = files.map(
-      (file) => file.filename,
-    );
-
-    return {
-      record_id,
-      pictureDoc,
-      dniDoc,
-      votingBallotDoc,
-      notarizDegreeDoc,
-    };
-  }
 
   async processUploadedFilesForUpdate(files: {
     pictureDoc?: Express.Multer.File[];
@@ -136,31 +110,26 @@ export class PersonalService {
     return updates;
   }
 
-  async savePersonalDocuments(
-    createDto: CreatePersonalDocumentsDto,
-  ): Promise<PersonalDocumentsEntity> {
+  async createInitialPersonalDocuments(recordId: string): Promise<PersonalDocumentsEntity> {
     const record = await this.recordRepository.findOne({
-      where: { id: createDto.record_id },
+      where: { id: recordId },
     });
     if (!record) {
-      throw new NotFoundException(`Record con ID ${createDto.record_id} no encontrado`);
+      throw new NotFoundException(`Record con ID ${recordId} no encontrado`);
     }
 
-    const pictureDocStatus = createDto.pictureDocStatus ? await this.documentStatusRepository.findOne({ where: { id: createDto.pictureDocStatus } }) : undefined;
-    const dniDocStatus = createDto.dniDocStatus ? await this.documentStatusRepository.findOne({ where: { id: createDto.dniDocStatus } }) : undefined;
-    const votingBallotDocStatus = createDto.votingBallotDocStatus ? await this.documentStatusRepository.findOne({ where: { id: createDto.votingBallotDocStatus } }) : undefined;
-    const notarizDegreeDocStatus = createDto.notarizDegreeDocStatus ? await this.documentStatusRepository.findOne({ where: { id: createDto.notarizDegreeDocStatus } }) : undefined;
-
-    const documents = this.personalDocumentsRepository.create({
-      ...createDto,
+    const personalDocuments = this.personalDocumentsRepository.create({
       record: record,
-      pictureDocStatus,
-      dniDocStatus,
-      votingBallotDocStatus,
-      notarizDegreeDocStatus,
+      pictureDoc: null,
+      dniDoc: null,
+      votingBallotDoc: null,
+      notarizDegreeDoc: null,
     });
-    return this.personalDocumentsRepository.save(documents);
+
+    return this.personalDocumentsRepository.save(personalDocuments);
   }
+
+
 
   async updatePersonalDocuments(
     id: string,
@@ -268,6 +237,7 @@ export class PersonalService {
   ): Promise<void> {
     const documents = await this.personalDocumentsRepository.findOne({
       where: { id },
+      relations: ['record', 'record.user'],
     });
     if (!documents) {
       throw new NotFoundException(
@@ -281,7 +251,11 @@ export class PersonalService {
       throw new NotFoundException(`Documento ${documentType} no encontrado`);
     }
 
-    const filePath = path.join('./uploads/documentos-personales', filename);
+    const userIdentification = documents.record?.user?.identification;
+    if (!userIdentification) {
+      throw new NotFoundException('No se pudo identificar al usuario');
+    }
+    const filePath = path.join(process.cwd(), 'uploads', 'documentos-personales', userIdentification, filename);
     if (!fs.existsSync(filePath)) {
       throw new NotFoundException(
         `Archivo ${filename} no encontrado en el servidor`,
@@ -327,11 +301,18 @@ export class PersonalService {
     if (!validFields.includes(field)) {
       throw new BadRequestException('Campo de documento inválido');
     }
-    const doc = await this.personalDocumentsRepository.findOne({ where: { id } });
+    const doc = await this.personalDocumentsRepository.findOne({ 
+      where: { id },
+      relations: ['record', 'record.user']
+    });
     if (!doc) throw new NotFoundException('Documento no encontrado');
     const filename = doc[field];
     if (filename) {
-      const filePath = path.join('./uploads/documentos-personales', filename);
+      const userIdentification = doc.record?.user?.identification;
+      if (!userIdentification) {
+        throw new NotFoundException('No se pudo identificar al usuario');
+      }
+      const filePath = path.join(process.cwd(), 'uploads', 'documentos-personales', userIdentification, filename);
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
@@ -343,9 +324,12 @@ export class PersonalService {
   private async deleteFileIfRejected(documents: PersonalDocumentsEntity, field: string) {
     const filename = documents[field];
     if (filename) {
-      const filePath = path.join('./uploads/documentos-personales', filename);
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
+      const userIdentification = documents.record?.user?.identification;
+      if (userIdentification) {
+        const filePath = path.join(process.cwd(), 'uploads', 'documentos-personales', userIdentification, filename);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
       }
       documents[field] = null;
       await this.personalDocumentsRepository.save(documents);

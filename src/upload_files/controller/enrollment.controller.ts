@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, UploadedFile, UseGuards, UseInterceptors, Res } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, UploadedFile, UseGuards, UseInterceptors, Res, Request } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import { RolesGuard } from "src/auth/custom-role-guard/roles.guard";
 import { EnrollmentService } from "../services/enrollment.service";
@@ -16,9 +16,43 @@ export class EnrollmentController {
 
     @Post('')
     @UseInterceptors(EnrollmentService.getFileUploadInterceptor())
-    async uploadGradeDocument(@UploadedFile() file: Express.Multer.File, @Body() grade: CreateEnrollmentDto
+    async uploadGradeDocument(
+        @UploadedFile() file: Express.Multer.File, 
+        @Body() grade: CreateEnrollmentDto,
+        @Request() req
     ) {
-        grade.name = file.filename;
+        const fileNamingService = new (await import('../services/file-naming.service')).FileNamingService();
+        const userIdentification = req.user?.identification || 'unknown';
+        const standardFileName = fileNamingService.generateStandardFileName(
+            'file',
+            userIdentification,
+            file.originalname
+        );
+        
+        const ext = file.originalname.split('.').pop();
+        const finalFileName = `${standardFileName}.${ext}`;
+        const fs = require('fs');
+        const path = require('path');
+        const tempFolder = './uploads/documentos-matriculas';
+        const userFolder = path.join('./uploads', 'documentos-matriculas', userIdentification);
+        
+        if (!fs.existsSync(userFolder)) {
+            fs.mkdirSync(userFolder, { recursive: true });
+        }
+        
+        const tempFilePath = path.join(tempFolder, file.filename);
+        const userFilePath = path.join(userFolder, finalFileName);
+        
+        if (fs.existsSync(tempFilePath)) {
+            try {
+                fs.renameSync(tempFilePath, userFilePath);
+                grade.name = finalFileName;
+            } catch (error) {
+                console.error(`❌ Error moviendo archivo:`, error);
+                throw new Error(`Error moviendo archivo: ${error.message}`);
+            }
+        }
+        
         const createGradeEnrollment = await this.enrollmentService.Create(grade);
         return {
             message: 'Documento de respaldo subido correctamente',

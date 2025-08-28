@@ -14,7 +14,6 @@ import { StatusService } from './status.service';
 import { SemesterService } from 'src/core/services/semester.service';
 import { CareerService } from 'src/core/services/career.service';
 
-
 @Injectable()
 export class UsersService {
     constructor(
@@ -87,7 +86,42 @@ export class UsersService {
             semester: validateSemester,
             career: validateCareer,
         });
-        return await this.repository.save(newUser);
+        
+        const savedUser = await this.repository.save(newUser);
+        
+        if (savedUser.identification) {
+            this.createUserFolderStructure(savedUser.identification);
+        }
+        return savedUser;
+    }
+
+    private createUserFolderStructure(userIdentification: string): void {
+        const fs = require('fs');
+        const path = require('path');
+        
+        const basePath = './uploads';
+        
+        const documentTypes = [
+            'documentos-grado',
+            'documentos-inscripcion',
+            'documentos-matriculas',
+            'documentos-notas',
+            'documentos-permisos',
+            'documentos-personales'
+        ];
+
+        documentTypes.forEach(docType => {
+            const docTypePath = path.join(basePath, docType);
+            const userDocPath = path.join(docTypePath, userIdentification);
+            
+            if (!fs.existsSync(docTypePath)) {
+                fs.mkdirSync(docTypePath, { recursive: true });
+            }
+            
+            if (!fs.existsSync(userDocPath)) {
+                fs.mkdirSync(userDocPath, { recursive: true });
+            }
+        });
     }
 
     async findAll(): Promise<ServiceResponseHttpModel> {

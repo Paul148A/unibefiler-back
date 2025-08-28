@@ -24,6 +24,7 @@ import { DocumentStatusEntity } from '../../core/entities/document-status.entity
 import { CoreRepositoryEnum } from 'src/core/enums/core-repository-enum';
 import { EmailService } from '../../auth/services/email.service';
 import { UsersService } from '../../auth/services/user.service';
+import { UserFolderService } from './user-folder.service';
 
 @Injectable()
 export class InscriptionService {
@@ -37,9 +38,18 @@ export class InscriptionService {
     private readonly emailService: EmailService,
     @Inject(forwardRef(() => UsersService))
     private readonly usersService: UsersService,
+    private readonly userFolderService: UserFolderService,
   ) {}
 
   static getFileUploadInterceptor() {
+    const fs = require('fs');
+    const path = require('path');
+    const tempPath = path.join(process.cwd(), 'uploads', 'temp');
+    
+    if (!fs.existsSync(tempPath)) {
+      fs.mkdirSync(tempPath, { recursive: true });
+    }
+
     return FileFieldsInterceptor(
       [
         { name: 'registration_doc', maxCount: 1 },
@@ -51,12 +61,24 @@ export class InscriptionService {
       ],
       {
         storage: diskStorage({
-          destination: './uploads/documentos-inscripcion',
+          destination: (req, file, callback) => {
+            callback(null, tempPath);
+          },
           filename: (req, file, callback) => {
             const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
             const ext = extname(file.originalname);
-            const filename = `${uniqueSuffix}${ext}`;
-            callback(null, filename);
+            const tempFileName = `${uniqueSuffix}${ext}`;
+            
+            if (!req['tempFileInfo']) {
+              req['tempFileInfo'] = {};
+            }
+            req['tempFileInfo'][file.fieldname] = {
+              originalName: file.originalname,
+              fieldName: file.fieldname,
+              tempFileName: tempFileName
+            };
+            
+            callback(null, tempFileName);
           },
         }),
         fileFilter: (req, file, callback) => {
@@ -278,6 +300,7 @@ export class InscriptionService {
   ): Promise<void> {
     const inscription = await this.inscriptionFormRepository.findOne({
       where: { id },
+      relations: ['record', 'record.user'],
     });
     if (!inscription) {
       throw new NotFoundException(
@@ -291,7 +314,12 @@ export class InscriptionService {
       throw new NotFoundException(`Documento ${documentType} no encontrado`);
     }
 
-    const filePath = path.join('./uploads/documentos-inscripcion', filename);
+    const userIdentification = inscription.record?.user?.identification;
+    if (!userIdentification) {
+      throw new NotFoundException('No se pudo identificar al usuario');
+    }
+    
+    const filePath = path.join(process.cwd(), 'uploads', 'documentos-inscripcion', userIdentification, filename);
     if (!fs.existsSync(filePath)) {
       throw new NotFoundException(
         `Archivo ${filename} no encontrado en el servidor`,
@@ -413,11 +441,18 @@ export class InscriptionService {
     if (!validFields.includes(field)) {
       throw new BadRequestException('Campo de documento inválido');
     }
-    const doc = await this.inscriptionFormRepository.findOne({ where: { id } });
+    const doc = await this.inscriptionFormRepository.findOne({ 
+      where: { id },
+      relations: ['record', 'record.user']
+    });
     if (!doc) throw new NotFoundException('Documento no encontrado');
     const filename = doc[field];
     if (filename) {
-      const filePath = path.join('./uploads/documentos-inscripcion', filename);
+      const userIdentification = doc.record?.user?.identification;
+      if (!userIdentification) {
+        throw new NotFoundException('No se pudo identificar al usuario');
+      }
+      const filePath = path.join(process.cwd(), 'uploads', 'documentos-inscripcion', userIdentification, filename);
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
@@ -429,9 +464,12 @@ export class InscriptionService {
   private async deleteFileIfRejected(inscription: InscriptionDocumentsEntity, field: string) {
     const filename = inscription[field];
     if (filename) {
-      const filePath = path.join('./uploads/documentos-inscripcion', filename);
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
+      const userIdentification = inscription.record?.user?.identification;
+      if (userIdentification) {
+        const filePath = path.join(process.cwd(), 'uploads', 'documentos-inscripcion', userIdentification, filename);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
       }
       inscription[field] = null;
       await this.inscriptionFormRepository.save(inscription);

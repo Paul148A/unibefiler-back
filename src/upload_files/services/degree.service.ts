@@ -25,6 +25,7 @@ import { CoreRepositoryEnum } from 'src/core/enums/core-repository-enum';
 import { UpdateDegreeStatusDto } from '../dto/degree-document/update-degree.dto';
 import { EmailService } from '../../auth/services/email.service';
 import { UsersService } from '../../auth/services/user.service';
+import { UserFolderService } from './user-folder.service';
 
 @Injectable()
 export class DegreeService {
@@ -38,9 +39,18 @@ export class DegreeService {
     private readonly emailService: EmailService,
     @Inject(forwardRef(() => UsersService))
     private readonly usersService: UsersService,
+    private readonly userFolderService: UserFolderService,
   ) {}
 
   static getFileUploadInterceptor() {
+    const fs = require('fs');
+    const path = require('path');
+    const tempPath = path.join(process.cwd(), 'uploads', 'temp');
+    
+    if (!fs.existsSync(tempPath)) {
+      fs.mkdirSync(tempPath, { recursive: true });
+    }
+
     return FileFieldsInterceptor(
       [
         { name: 'topic_complain_doc', maxCount: 1 },
@@ -54,12 +64,24 @@ export class DegreeService {
       ],
       {
         storage: diskStorage({
-          destination: './uploads/documentos-grado',
+          destination: (req, file, callback) => {
+            callback(null, tempPath);
+          },
           filename: (req, file, callback) => {
             const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
             const ext = extname(file.originalname);
-            const filename = `${uniqueSuffix}${ext}`;
-            callback(null, filename);
+            const tempFileName = `${uniqueSuffix}${ext}`;
+            
+            if (!req['tempFileInfo']) {
+              req['tempFileInfo'] = {};
+            }
+            req['tempFileInfo'][file.fieldname] = {
+              originalName: file.originalname,
+              fieldName: file.fieldname,
+              tempFileName: tempFileName
+            };
+            
+            callback(null, tempFileName);
           },
         }),
         fileFilter: (req, file, callback) => {
@@ -309,6 +331,7 @@ export class DegreeService {
   ): Promise<void> {
     const degree = await this.degreeRepository.findOne({
       where: { id },
+      relations: ['record', 'record.user'],
     });
     if (!degree) {
       throw new NotFoundException(
@@ -322,7 +345,12 @@ export class DegreeService {
       throw new NotFoundException(`Documento ${documentType} no encontrado`);
     }
 
-    const filePath = path.join('./uploads/documentos-grado', filename);
+    const userIdentification = degree.record?.user?.identification;
+    if (!userIdentification) {
+      throw new NotFoundException('No se pudo identificar al usuario');
+    }
+    
+    const filePath = path.join(process.cwd(), 'uploads', 'documentos-grado', userIdentification, filename);
     if (!fs.existsSync(filePath)) {
       throw new NotFoundException(
         `Archivo ${filename} no encontrado en el servidor`,
@@ -384,11 +412,18 @@ export class DegreeService {
     if (!validFields.includes(field)) {
       throw new BadRequestException('Campo de documento inválido');
     }
-    const doc = await this.degreeRepository.findOne({ where: { id } });
+    const doc = await this.degreeRepository.findOne({ 
+      where: { id },
+      relations: ['record', 'record.user']
+    });
     if (!doc) throw new NotFoundException('Documento no encontrado');
     const filename = doc[field];
     if (filename) {
-      const filePath = path.join('./uploads/documentos-grado', filename);
+      const userIdentification = doc.record?.user?.identification;
+      if (!userIdentification) {
+        throw new NotFoundException('No se pudo identificar al usuario');
+      }
+      const filePath = path.join(process.cwd(), 'uploads', 'documentos-grado', userIdentification, filename);
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
@@ -400,9 +435,12 @@ export class DegreeService {
   private async deleteFileIfRejected(degree: DegreeDocumentsEntity, field: string) {
     const filename = degree[field];
     if (filename) {
-      const filePath = path.join('./uploads/documentos-grado', filename);
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
+      const userIdentification = degree.record?.user?.identification;
+      if (userIdentification) {
+        const filePath = path.join(process.cwd(), 'uploads', 'documentos-grado', userIdentification, filename);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
       }
       degree[field] = null;
       await this.degreeRepository.save(degree);

@@ -21,12 +21,14 @@ import { InscriptionResponseDto } from '../dto/inscription-document/inscription-
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from 'src/auth/services/user.service';
 import { UpdateStatusDto } from '../dto/inscription-document/update-status.dto';
+import { UserFolderService } from '../services/user-folder.service';
 
 @Controller('api1/inscription')
 export class InscriptionController {
   constructor(
     private readonly inscriptionService: InscriptionService,
     private readonly usersService: UsersService,
+    private readonly userFolderService: UserFolderService,
   ) {}
 
   @Post('upload-inscription-form')
@@ -38,7 +40,19 @@ export class InscriptionController {
     if (!user.record) {
         throw new NotFoundException('El usuario no tiene un record asociado');
     }
+    
+    this.userFolderService.createUserFolderStructure(user.identification);
     const createInscriptionDto = await this.inscriptionService.processUploadedFilesForCreate(files, user.record.id);
+    
+    if (Object.keys(files).length > 0) {
+      try {
+        await this.moveFilesToUserFolder(files, user.identification, createInscriptionDto);
+      } catch (error) {
+        console.error('Error moviendo archivos:', error);
+        throw new Error(`Error moviendo archivos: ${error.message}`);
+      }
+    }
+    
     const inscription = await this.inscriptionService.saveInscriptionForm(createInscriptionDto);
     return {
         message: 'Formulario de inscripción subido correctamente',
@@ -47,15 +61,28 @@ export class InscriptionController {
   } 
 
   @Put('update-inscription-form/:id')
+  @UseGuards(AuthGuard('jwt-cookie'))
   @UseInterceptors(InscriptionService.getFileUploadInterceptor())
-  async updateInscriptionForm(@Param('id') id: string, @UploadedFiles() files) {
-    const updateInscriptionDto =
-      await this.inscriptionService.processUploadedFilesForUpdate(files);
-    const updatedInscription =
-      await this.inscriptionService.updateInscriptionForm(
-        id,
-        updateInscriptionDto,
-      );
+  async updateInscriptionForm(@Param('id') id: string, @UploadedFiles() files, @Request() req) {
+    const userId = req.user.sub;
+    const user = await this.usersService.findOne(userId);
+    if (!user.record) {
+      throw new NotFoundException('El usuario no tiene un record asociado');
+    }
+    
+    this.userFolderService.createUserFolderStructure(user.identification);
+    const updateInscriptionDto = await this.inscriptionService.processUploadedFilesForUpdate(files);
+    
+    if (Object.keys(files).length > 0) {
+      try {
+        await this.moveFilesToUserFolder(files, user.identification, updateInscriptionDto);
+      } catch (error) {
+        console.error('❌ Error moviendo archivos:', error);
+        throw new Error(`Error moviendo archivos: ${error.message}`);
+      }
+    }
+    
+    const updatedInscription = await this.inscriptionService.updateInscriptionForm(id, updateInscriptionDto);
     return {
       message: 'Formulario de inscripción actualizado correctamente',
       data: new InscriptionResponseDto(updatedInscription),
@@ -112,6 +139,77 @@ export class InscriptionController {
     return {
       message: 'Estado del certificado actualizado correctamente',
       data: new InscriptionResponseDto(inscription)
+    };
+  }
+
+  private async moveFilesToUserFolder(
+    files: any,
+    userIdentification: string,
+    createDto: any
+  ): Promise<void> {
+    const fs = require('fs');
+    const path = require('path');
+    
+    const tempFolder = path.join(process.cwd(), 'uploads', 'temp');
+    const userFolder = path.join(process.cwd(), 'uploads', 'documentos-inscripcion', userIdentification);
+    
+    if (!fs.existsSync(tempFolder)) {
+      console.error(`❌ Carpeta temporal no existe: ${tempFolder}`);
+      throw new Error(`Carpeta temporal no existe: ${tempFolder}`);
+    }
+    
+    if (!fs.existsSync(userFolder)) {
+      fs.mkdirSync(userFolder, { recursive: true });
+    }
+    
+    for (const field of Object.keys(createDto)) {
+      if (createDto[field] && typeof createDto[field] === 'string') {
+        const tempFilePath = path.join(tempFolder, createDto[field]);
+        
+        if (fs.existsSync(tempFilePath)) {
+          try {
+            const fileNamingService = new (await import('../services/file-naming.service')).FileNamingService();
+            const standardFileName = fileNamingService.generateStandardFileName(
+              field,
+              userIdentification,
+              files[field]?.[0]?.originalname
+            );
+            
+            const ext = path.extname(createDto[field]);
+            const finalFileName = `${standardFileName}${ext}`;
+            const userFilePath = path.join(userFolder, finalFileName);
+            
+            fs.renameSync(tempFilePath, userFilePath);
+            createDto[field] = finalFileName;
+            
+          } catch (error) {
+            console.error(`Error moviendo archivo ${tempFilePath}:`, error);
+            throw new Error(`Error moviendo archivo ${createDto[field]}: ${error.message}`);
+          }
+        } else {
+          console.error(`Archivo temporal no encontrado: ${tempFilePath}`);
+          throw new Error(`Archivo temporal no encontrado: ${createDto[field]}`);
+        }
+      }
+    }
+  }
+
+  @Get('test-auth')
+  @UseGuards(AuthGuard('jwt-cookie'))
+  async testAuth(@Request() req) {
+    return {
+      message: 'Autenticación exitosa',
+      user: req.user,
+      cookies: req.cookies
+    };
+  }
+
+  @Get('test-no-auth')
+  async testNoAuth(@Request() req) {
+    return {
+      message: 'Endpoint sin autenticación',
+      cookies: req.cookies,
+      user: req.user
     };
   }
 }
