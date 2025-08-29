@@ -383,9 +383,12 @@ export class DegreeService {
   }
 
   async getDegreeDocumentsByRecordId(recordId: string): Promise<DegreeDocumentsEntity | null> {
-    return this.degreeRepository.findOne({
+    
+    const result = await this.degreeRepository.findOne({
       where: { record: { id: recordId } },
       relations: [
+        'record',
+        'record.user',
         'topicComplainDocStatus',
         'topicApprovalDocStatus',
         'tutorAssignmentDocStatus',
@@ -396,6 +399,14 @@ export class DegreeService {
         'academicClearanceStatus',
       ],
     });
+    
+    if (result?.record?.user) {
+
+    } else {
+      
+    }
+    
+    return result;
   }
 
   async deleteFile(id: string, field: string): Promise<void> {

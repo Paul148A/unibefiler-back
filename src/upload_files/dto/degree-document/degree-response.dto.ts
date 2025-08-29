@@ -18,6 +18,12 @@ export class DegreeResponseDto {
   electiveGradeStatus?: { id: string; name: string };
   academicClearance: string;
   academicClearanceStatus?: { id: string; name: string };
+  record?: {
+    id: string;
+    user?: {
+      identification: string;
+    };
+  };
   createdAt: Date;
   updatedAt: Date;
 
@@ -39,6 +45,12 @@ export class DegreeResponseDto {
     this.electiveGradeStatus = entity.electiveGradeStatus ? { id: entity.electiveGradeStatus.id, name: entity.electiveGradeStatus.name } : undefined;
     this.academicClearance = entity.academicClearance;
     this.academicClearanceStatus = entity.academicClearanceStatus ? { id: entity.academicClearanceStatus.id, name: entity.academicClearanceStatus.name } : undefined;
+    this.record = entity.record ? {
+      id: entity.record.id,
+      user: entity.record.user ? {
+        identification: entity.record.user.identification
+      } : undefined
+    } : undefined;
     this.createdAt = entity.createdAt;
     this.updatedAt = entity.updatedAt;
   }

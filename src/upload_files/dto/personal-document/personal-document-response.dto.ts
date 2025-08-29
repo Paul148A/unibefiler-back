@@ -10,6 +10,12 @@ export class PersonalDocumentsResponseDto {
   votingBallotDocStatus?: { id: string; name: string };
   notarizDegreeDoc: string;
   notarizDegreeDocStatus?: { id: string; name: string };
+  record?: {
+    id: string;
+    user?: {
+      identification: string;
+    };
+  };
   createdAt: Date;
   updatedAt: Date;
 
@@ -23,6 +29,12 @@ export class PersonalDocumentsResponseDto {
     this.votingBallotDocStatus = entity.votingBallotDocStatus ? { id: entity.votingBallotDocStatus.id, name: entity.votingBallotDocStatus.name } : undefined;
     this.notarizDegreeDoc = entity.notarizDegreeDoc;
     this.notarizDegreeDocStatus = entity.notarizDegreeDocStatus ? { id: entity.notarizDegreeDocStatus.id, name: entity.notarizDegreeDocStatus.name } : undefined;
+    this.record = entity.record ? {
+      id: entity.record.id,
+      user: entity.record.user ? {
+        identification: entity.record.user.identification
+      } : undefined
+    } : undefined;
     this.createdAt = entity.createdAt;
     this.updatedAt = entity.updatedAt;
   }

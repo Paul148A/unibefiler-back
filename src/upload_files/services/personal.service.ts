@@ -285,15 +285,26 @@ export class PersonalService {
   }
 
    async getPersonalDocumentsByRecordId(recordId: string): Promise<PersonalDocumentsEntity | null> {
-    return this.personalDocumentsRepository.findOne({
+    
+    const result = await this.personalDocumentsRepository.findOne({
       where: { record: { id: recordId } },
       relations: [
+        'record',
+        'record.user',
         'pictureDocStatus',
         'dniDocStatus',
         'votingBallotDocStatus',
         'notarizDegreeDocStatus',
       ],
     });
+    
+    if (result?.record?.user) {
+
+    } else {
+      
+    }
+    
+    return result;
   }
 
   async deleteFile(id: string, field: string): Promise<void> {

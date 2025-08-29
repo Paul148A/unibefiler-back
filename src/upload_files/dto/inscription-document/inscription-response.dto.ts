@@ -14,6 +14,12 @@ export class InscriptionResponseDto {
   enrollmentCertificateDocStatus?: { id: string; name: string };
   approvalDoc: string;
   approvalDocStatus?: { id: string; name: string };
+  record?: {
+    id: string;
+    user?: {
+      identification: string;
+    };
+  };
   createdAt: Date;
   updatedAt: Date;
 
@@ -31,6 +37,12 @@ export class InscriptionResponseDto {
     this.enrollmentCertificateDocStatus = entity.enrollmentCertificateDocStatus ? { id: entity.enrollmentCertificateDocStatus.id, name: entity.enrollmentCertificateDocStatus.name } : undefined;
     this.approvalDoc = entity.approvalDoc;
     this.approvalDocStatus = entity.approvalDocStatus ? { id: entity.approvalDocStatus.id, name: entity.approvalDocStatus.name } : undefined;
+    this.record = entity.record ? {
+      id: entity.record.id,
+      user: entity.record.user ? {
+        identification: entity.record.user.identification
+      } : undefined
+    } : undefined;
     this.createdAt = entity.createdAt;
     this.updatedAt = entity.updatedAt;
   }

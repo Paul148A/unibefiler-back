@@ -351,9 +351,12 @@ export class InscriptionService {
   }
 
   async getInscriptionDocumentsByRecordId(recordId: string): Promise<InscriptionDocumentsEntity> {
-    return this.inscriptionFormRepository.findOne({
+    
+    const result = await this.inscriptionFormRepository.findOne({
       where: { record: { id: recordId } },
       relations: [
+        'record',
+        'record.user',
         'registrationDocStatus',
         'semesterGradeChartDocStatus',
         'reEntryDocStatus',
@@ -362,6 +365,14 @@ export class InscriptionService {
         'approvalDocStatus',
       ],
     });
+    
+    if (result?.record?.user) {
+
+    } else {
+      
+    }
+    
+    return result;
   }
 
   async updateCertificateStatus(id: string, updateStatusDto: any): Promise<InscriptionDocumentsEntity> {
