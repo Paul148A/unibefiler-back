@@ -346,4 +346,48 @@ export class PersonalService {
       await this.personalDocumentsRepository.save(documents);
     }
   }
+
+  async updatePersonalStatus(id: string, dto: { field: string; statusId: string }): Promise<PersonalDocumentsEntity> {
+    const documents = await this.personalDocumentsRepository.findOne({
+      where: { id },
+      relations: ['record', 'record.user'],
+    });
+    
+    if (!documents) {
+      throw new NotFoundException(`Documentos personales con ID ${id} no encontrados`);
+    }
+
+    const statusEntity = await this.documentStatusRepository.findOne({ where: { id: dto.statusId } });
+    if (!statusEntity) {
+      throw new NotFoundException('Estado no encontrado');
+    }
+
+    documents[dto.field] = statusEntity;
+    const updated = await this.personalDocumentsRepository.save(documents);
+
+    if (statusEntity.name && statusEntity.name.toLowerCase() === 'rechazado') {
+      const user = updated.record?.user;
+      if (user && user.email) {
+        const userName = `${user.names} ${user.last_names}`;
+        const documentTypeNames: Record<string, string> = {
+          pictureDocStatus: 'Foto de tamaño carnet',
+          dniDocStatus: 'Copia de cédula',
+          votingBallotDocStatus: 'Papeleta de votación',
+          notarizDegreeDocStatus: 'Título notarizado',
+        };
+        const documentTypeFriendly = documentTypeNames[dto.field] || dto.field;
+        const reason = 'Por favor, revise que la documentacion sea la correcta y vuelva a subirlo.';
+        
+        try {
+          await this.emailService.sendRejectionEmail(user.email, userName, documentTypeFriendly, reason);
+          const docField = dto.field.replace('Status', '');
+          await this.deleteFileIfRejected(updated, docField);
+        } catch (error) {
+          console.error(`Error enviando correo de rechazo:`, error);
+        }
+      }
+    }
+
+    return updated;
+  }
 }

@@ -13,6 +13,7 @@ import {
   UseGuards,
   Request,
   NotFoundException,
+  Patch,
 } from '@nestjs/common';
 import { PersonalService } from '../services/personal.service';
 import { Response } from 'express';
@@ -142,6 +143,18 @@ export class PersonalController {
       message: 'Autenticación exitosa',
       user: req.user,
       cookies: req.cookies
+    };
+  }
+
+  @Patch('update-personal-status/:id')
+  async updatePersonalStatus(
+    @Param('id') id: string,
+    @Body() updateStatusDto: { field: string; statusId: string }
+  ) {
+    const updated = await this.personalDocumentsService.updatePersonalStatus(id, updateStatusDto);
+    return {
+      message: 'Estado actualizado correctamente',
+      data: new PersonalDocumentsResponseDto(updated),
     };
   }
 
